@@ -1,7 +1,4 @@
-"""Application configuration.
-
-Everything that a student may want to change lives here.
-"""
+"""Application configuration."""
 import os
 import shutil
 import secrets
@@ -12,26 +9,34 @@ IS_VERCEL = bool(os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION
 
 
 def get_database_path():
-    """On Vercel, copy database to /tmp so SQLite can perform INSERT/UPDATE queries on a writable filesystem."""
+    """On Vercel, copy the bundled database to /tmp (writable) on first use.
+    If no bundled DB exists, return the /tmp path so init_schema() creates it fresh.
+    """
     base_db = os.path.join(BASE_DIR, "medical_reports.db")
     if IS_VERCEL:
         tmp_db = "/tmp/medical_reports.db"
-        if not os.path.exists(tmp_db) and os.path.exists(base_db):
-            try:
-                shutil.copyfile(base_db, tmp_db)
-            except Exception:
-                pass
+        if not os.path.exists(tmp_db):
+            if os.path.exists(base_db):
+                try:
+                    shutil.copyfile(base_db, tmp_db)
+                except Exception:
+                    pass
         return tmp_db
     return base_db
 
 
 def _load_secret_key():
-    """Use SECRET_KEY from environment or local fallback without crashing on read-only file systems."""
+    """Use SECRET_KEY from environment or a stable fallback.
+    IMPORTANT: set the SECRET_KEY environment variable in Vercel dashboard
+    so sessions remain valid across serverless invocations.
+    """
     env_key = os.environ.get("SECRET_KEY")
     if env_key:
         return env_key
     if IS_VERCEL:
-        return "medivault-secret-key-vercel-production-2026"
+        # Stable fallback so sessions don't break between cold starts.
+        # Override this with a real SECRET_KEY env var in Vercel for production.
+        return "medivault-sih-2026-stable-secret-key-do-change-in-prod"
     key_file = os.path.join(BASE_DIR, ".secret_key")
     if os.path.exists(key_file):
         try:
@@ -53,8 +58,7 @@ class Config:
     DATABASE = get_database_path()
     UPLOAD_FOLDER = "/tmp/uploads" if IS_VERCEL else os.path.join(BASE_DIR, "uploads")
 
-    # Maximum size of one uploaded report (in MB). Change it here or with
-    # the MAX_FILE_MB environment variable.
+    # Maximum size of one uploaded report (in MB).
     MAX_FILE_MB = int(os.environ.get("MAX_FILE_MB", 10))
     MAX_CONTENT_LENGTH = (MAX_FILE_MB + 1) * 1024 * 1024
 
@@ -63,3 +67,5 @@ class Config:
     PERMANENT_SESSION_LIFETIME = timedelta(days=7)
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = "Lax"
+    # On Vercel (HTTPS), mark session cookie as Secure
+    SESSION_COOKIE_SECURE = IS_VERCEL
