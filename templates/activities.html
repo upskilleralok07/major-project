@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import icon, empty_state, action_icon, action_tone %}
+{% block title %}Activity History{% endblock %}
+{% block page_title %}Activity History{% endblock %}
+{% block content %}
+{% if groups %}
+<div class="act-timeline">
+  {% for grp in groups %}
+  <div class="act-day reveal">{{ grp.label }}</div>
+  {% for a in grp["items"] %}
+  <div class="act-row reveal">
+    <span class="act-ic tone-{{ action_tone(a.action) }}">{{ action_icon(a.action) }}</span>
+    <div class="act-card">
+      <div class="act-top"><strong>{{ a.action }}</strong><span class="act-time">{{ a.created_at[11:16] }}</span></div>
+      <div class="act-text">{{ a.details or '' }}</div>
+      {% if a.user_id != current_user.id and a.actor_name %}<div class="act-actor">by {{ a.actor_name }}</div>{% endif %}
+    </div>
+  </div>
+  {% endfor %}
+  {% endfor %}
+</div>
+{% else %}
+<div class="card">{{ empty_state('activity', 'No activity yet', 'Your uploads, views, downloads and shares will appear here.') }}</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import icon, empty_state %}
+{% block title %}Compare Reports{% endblock %}
+{% block page_title %}Compare Reports{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card-header"><h3 class="card-title">Choose two reports from the same category</h3></div>
+  {% if reports|length < 2 %}
+    {{ empty_state('columns', 'Not enough reports', 'Upload at least two reports in the same category to compare them.', 'Upload report', url_for('patient.upload_report')) }}
+  {% else %}
+  <form method="get" id="compareForm" class="compare-form">
+    <div class="form-group"><label class="form-label" for="cmpCategory">Category</label>
+      <select class="form-control" id="cmpCategory"><option value="">Select category</option>
+        {% for c in categories %}<option value="{{ c.id }}" {{ 'selected' if ra and ra.category_id == c.id }}>{{ c.name }}</option>{% endfor %}</select></div>
+    <div class="form-group"><label class="form-label" for="cmpA">First report</label>
+      <select class="form-control" id="cmpA" name="a" required><option value="">Select report</option>
+        {% for r in reports %}<option value="{{ r.id }}" data-category="{{ r.category_id }}" {{ 'selected' if sel_a == r.id }}>{{ r.title }} — {{ r.report_date|fmt_date }}</option>{% endfor %}</select></div>
+    <div class="vs-badge">VS</div>
+    <div class="form-group"><label class="form-label" for="cmpB">Second report</label>
+      <select class="form-control" id="cmpB" name="b" required><option value="">Select report</option>
+        {% for r in reports %}<option value="{{ r.id }}" data-category="{{ r.category_id }}" {{ 'selected' if sel_b == r.id }}>{{ r.title }} — {{ r.report_date|fmt_date }}</option>{% endfor %}</select></div>
+    <button class="btn btn-primary" type="submit">{{ icon('columns') }} Compare</button>
+  </form>
+  {% endif %}
+</div>
+
+{% if ra and rb %}
+<p class="disclaimer">{{ icon('alert') }} This page only places the two reports side by side. MediVault does not interpret results or give any medical diagnosis.</p>
+<div class="compare-grid">
+  {% for r in [ra, rb] %}
+  <div class="card compare-col">
+    <div class="compare-tag">{{ 'Report A' if loop.first else 'Report B' }}</div>
+    <h3>{{ r.title }}</h3>
+    <dl class="detail-list compact">
+      <div><dt>Category</dt><dd>{{ r.category_name }}</dd></div>
+      <div><dt>Date</dt><dd>{{ r.report_date|fmt_date }}</dd></div>
+      <div><dt>Hospital / Lab</dt><dd>{{ r.hospital_name or r.laboratory_name or '—' }}</dd></div>
+      <div><dt>Doctor</dt><dd>{{ r.doctor_name or '—' }}</dd></div>
+      <div class="full"><dt>Notes</dt><dd class="pre">{{ r.notes or '—' }}</dd></div>
+    </dl>
+    <div class="inline-preview short">
+      {% if r.file_type == 'pdf' %}<iframe src="{{ url_for('patient.preview_report', report_id=r.id) }}" title="Preview of {{ r.title }}"></iframe>
+      {% else %}<img src="{{ url_for('patient.preview_report', report_id=r.id) }}" alt="{{ r.title }}">{% endif %}
+    </div>
+    <div class="btn-row">
+      <a class="btn btn-outline btn-sm" href="{{ url_for('patient.report_details', report_id=r.id) }}">{{ icon('eye') }} Open</a>
+      <a class="btn btn-outline btn-sm" href="{{ url_for('patient.download_report', report_id=r.id) }}">{{ icon('download') }} Download</a>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/reports.js') }}"></script>{% endblock %}

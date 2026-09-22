@@ -1,0 +1,113 @@
+{% import '_macros.html' as m with context %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>{% block title %}Dashboard{% endblock %} · MediVault</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='images/favicon.svg') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/animations.css') }}">
+  {% block head %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+{% include '_sprite.html' %}
+
+{% if current_user %}
+{% set role = current_user.role %}
+{% set search_action = url_for('patient.reports') if role == 'patient' else (url_for('doctor.reports') if role == 'doctor' else url_for('admin.users')) %}
+{% macro nav_item(endpoint, ic, label, also=[]) %}
+  <a class="nav-link {{ 'active' if request.endpoint == endpoint or request.endpoint in also }}" href="{{ url_for(endpoint) }}" title="{{ label }}">
+    {{ m.icon(ic) }}<span class="nav-label">{{ label }}</span></a>
+{% endmacro %}
+<div class="app" id="app">
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <span class="logo">{{ m.icon('heart') }}</span><span class="brand-text">MediVault</span>
+    </div>
+    <nav class="nav" id="nav">
+      <span class="nav-indicator" id="navIndicator"></span>
+      {% if role == 'patient' %}
+        {{ nav_item('patient.dashboard', 'home', 'Dashboard') }}
+        {{ nav_item('patient.reports', 'file', 'My Reports', ['patient.report_details','patient.edit_report','patient.share_report']) }}
+        {{ nav_item('patient.upload_report', 'upload', 'Upload Report') }}
+        {{ nav_item('patient.important_reports', 'star', 'Important Reports') }}
+        {{ nav_item('patient.timeline', 'clock', 'Medical Timeline') }}
+        {{ nav_item('patient.compare', 'columns', 'Compare Reports') }}
+        {{ nav_item('patient.shared_reports', 'share', 'Shared Reports') }}
+        {{ nav_item('patient.activities', 'activity', 'Activity History') }}
+      {% elif role == 'doctor' %}
+        {{ nav_item('doctor.dashboard', 'home', 'Dashboard') }}
+        {{ nav_item('doctor.reports', 'folder', 'Shared Reports', ['doctor.report_details']) }}
+      {% else %}
+        {{ nav_item('admin.dashboard', 'home', 'Dashboard') }}
+        {{ nav_item('admin.users', 'users', 'Users', ['admin.user_detail']) }}
+        {{ nav_item('admin.categories', 'folder', 'Categories') }}
+        {{ nav_item('admin.activity', 'activity', 'Activity Logs') }}
+      {% endif %}
+      {{ nav_item('patient.profile', 'user', 'Profile', ['patient.edit_profile']) }}
+      {{ nav_item('patient.settings', 'settings', 'Settings') }}
+    </nav>
+    <form method="post" action="{{ url_for('auth.logout') }}" class="sidebar-foot">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="nav-link logout-btn" type="submit">{{ m.icon('logout') }}<span class="nav-label">Logout</span></button>
+    </form>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="icon-btn" id="sidebarToggle" aria-label="Toggle sidebar">{{ m.icon('menu') }}</button>
+      <h1 class="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
+      <form class="top-search" action="{{ search_action }}" method="get" role="search">
+        {{ m.icon('search') }}
+        <input type="search" name="q" placeholder="{{ 'Search reports…' if role == 'patient' else ('Search shared reports…' if role == 'doctor' else 'Search users…') }}" aria-label="Search">
+      </form>
+      <div class="dropdown" id="notifDropdown">
+        <button class="icon-btn" data-dropdown aria-label="Notifications">{{ m.icon('bell') }}{% if has_new_notifications %}<span class="notif-dot"></span>{% endif %}</button>
+        <div class="dropdown-menu notif-menu">
+          <div class="dropdown-head">Recent activity</div>
+          {% for n in notifications %}
+            <div class="notif-item"><span class="notif-ic tone-{{ m.action_tone(n.action) }}">{{ m.action_icon(n.action) }}</span>
+              <div><div class="notif-text">{{ n.details or n.action }}</div><div class="notif-time">{{ n.created_at|fmt_datetime }}</div></div></div>
+          {% else %}<div class="notif-empty">No recent activity.</div>{% endfor %}
+        </div>
+      </div>
+      <div class="dropdown" id="userDropdown">
+        <button class="user-chip" data-dropdown aria-label="Account menu">
+          <span class="avatar">{{ current_user.name|initials }}</span>
+          <span class="user-meta"><strong>{{ current_user.name }}</strong><small>{{ role|capitalize }}</small></span>
+          {{ m.icon('chevron-down', 'chev') }}
+        </button>
+        <div class="dropdown-menu">
+          <a href="{{ url_for('patient.profile') }}">{{ m.icon('user') }} My profile</a>
+          <a href="{{ url_for('patient.settings') }}">{{ m.icon('settings') }} Settings</a>
+          <form method="post" action="{{ url_for('auth.logout') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit">{{ m.icon('logout') }} Logout</button></form>
+        </div>
+      </div>
+    </header>
+    <main class="content page-enter" id="content">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+{% include '_preview_modal.html' %}
+{% else %}
+  {% block public %}{% endblock %}
+{% endif %}
+
+<div class="toast-container" id="toasts" aria-live="polite"></div>
+{% for category, message in get_flashed_messages(with_categories=true) %}
+  <span class="flash-data" hidden data-category="{{ category }}" data-message="{{ message }}"></span>
+{% endfor %}
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script src="{{ url_for('static', filename='js/animations.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

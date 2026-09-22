@@ -1,0 +1,49 @@
+{% macro icon(name, cls='') -%}
+<svg class="icon {{ cls }}" aria-hidden="true"><use href="#i-{{ name }}"/></svg>
+{%- endmacro %}
+
+{% macro status_badge(status) -%}
+<span class="badge badge-{{ {'active':'success','expired':'warning','revoked':'danger'}[status] }}"><span class="dot"></span>{{ status|capitalize }}</span>
+{%- endmacro %}
+
+{% macro empty_state(ic, title, text, btn_text='', btn_url='') -%}
+<div class="empty-state">
+  <div class="empty-illustration">{{ icon(ic) }}</div>
+  <h3>{{ title }}</h3>
+  <p>{{ text }}</p>
+  {% if btn_text %}<a class="btn btn-primary" href="{{ btn_url }}">{{ btn_text }}</a>{% endif %}
+</div>
+{%- endmacro %}
+
+{% macro field_error(errors, key) -%}
+{% if errors and errors.get(key) %}<div class="field-error">{{ errors[key] }}</div>{% endif %}
+{%- endmacro %}
+
+{# compact report row used on dashboard / lists #}
+{% macro report_row(r) -%}
+<div class="report-row">
+  <div class="cat-icon">{{ icon(r.category_icon) }}</div>
+  <div class="grow">
+    <a class="row-title" href="{{ url_for('patient.report_details', report_id=r.id) }}">{{ r.title }}</a>
+    <div class="row-meta">{{ r.category_name }} · {{ r.hospital_name or r.laboratory_name or '—' }} · {{ r.report_date|fmt_date }}</div>
+  </div>
+  {% if r.is_important %}<span class="badge badge-star">{{ icon('star') }}</span>{% endif %}
+  <button class="btn btn-ghost btn-icon js-preview" title="Preview"
+          data-preview-url="{{ url_for('patient.preview_report', report_id=r.id) }}"
+          data-download-url="{{ url_for('patient.download_report', report_id=r.id) }}"
+          data-type="{{ r.file_type }}" data-title="{{ r.title }}">{{ icon('eye') }}</button>
+</div>
+{%- endmacro %}
+
+{% macro action_icon(action) -%}
+{%- set m = {'Login':'lock','Logout':'logout','Report uploaded':'upload','Report viewed':'eye','Report downloaded':'download',
+ 'Report edited':'edit','Report deleted':'trash','Report shared':'share','Share revoked':'x','Reports compared':'columns',
+ 'Registered':'user','Password changed':'lock'} -%}
+{{ icon(m.get(action, 'activity')) }}
+{%- endmacro %}
+
+{% macro action_tone(action) -%}
+{%- set m = {'Report deleted':'danger','Share revoked':'danger','Report uploaded':'success','Report shared':'info',
+ 'Report downloaded':'info','Report edited':'warning','Login':'muted','Logout':'muted'} -%}
+{{ m.get(action, 'muted') }}
+{%- endmacro %}

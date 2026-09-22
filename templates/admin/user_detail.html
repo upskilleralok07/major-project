@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import icon, action_icon, action_tone %}
+{% block title %}{{ u.name }}{% endblock %}
+{% block page_title %}User details{% endblock %}
+{% block content %}
+<a class="back-link" href="{{ url_for('admin.users') }}">{{ icon('chevron-left') }} Back to users</a>
+<div class="profile-layout">
+  <div class="card profile-side"><div class="avatar xl">{{ u.name|initials }}</div><h2>{{ u.name }}</h2>
+    <span class="badge badge-info">{{ u.role|capitalize }}</span>
+    <p>{% if u.is_active %}<span class="badge badge-success"><span class="dot"></span>Active</span>{% else %}<span class="badge badge-danger"><span class="dot"></span>Inactive</span>{% endif %}</p>
+    {% if u.id != current_user.id %}
+    <form method="post" action="{{ url_for('admin.user_status', user_id=u.id) }}" {% if u.is_active %}data-confirm="{{ u.name }} will no longer be able to log in."{% endif %}>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn {{ 'btn-danger-outline' if u.is_active else 'btn-primary' }} btn-block" type="submit">{{ 'Deactivate user' if u.is_active else 'Activate user' }}</button></form>{% endif %}
+  </div>
+  <div class="grid">
+    <div class="card"><div class="card-header"><h3 class="card-title">Account information</h3></div>
+      <dl class="detail-list">
+        <div><dt>User ID</dt><dd>#{{ u.id }}</dd></div><div><dt>Email</dt><dd class="break">{{ u.email }}</dd></div>
+        <div><dt>Phone</dt><dd>{{ u.phone or '—' }}</dd></div><div><dt>Joined</dt><dd>{{ u.created_at|fmt_datetime }}</dd></div>
+        {% if pat %}<div><dt>Patient ID</dt><dd>{{ pat.patient_code }}</dd></div><div><dt>Age / Gender</dt><dd>{{ pat.age if pat.age is not none else '—' }} / {{ pat.gender or '—' }}</dd></div>
+          <div><dt>Reports</dt><dd>{{ report_count }}</dd></div><div><dt>Shares</dt><dd>{{ share_count }}</dd></div>{% endif %}
+        {% if doc %}<div><dt>Specialization</dt><dd>{{ doc.specialization or '—' }}</dd></div><div><dt>Hospital</dt><dd>{{ doc.hospital or '—' }}</dd></div>
+          <div><dt>Reports shared with them</dt><dd>{{ share_count }}</dd></div>{% endif %}
+      </dl>
+      <p class="muted small">Admins can see account details only – never the contents of a patient's private reports.</p></div>
+    <div class="card"><div class="card-header"><h3 class="card-title">Recent activity</h3></div>
+      <div class="activity-list">{% for a in logs %}<div class="activity-item"><span class="act-ic tone-{{ action_tone(a.action) }}">{{ action_icon(a.action) }}</span>
+        <div class="grow"><div class="act-text">{{ a.action }} — {{ a.details }}</div><div class="act-time">{{ a.created_at|fmt_datetime }}</div></div></div>
+        {% else %}<p class="muted pad">No activity recorded.</p>{% endfor %}</div></div>
+  </div>
+</div>
+{% endblock %}

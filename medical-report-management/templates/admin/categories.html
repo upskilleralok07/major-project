@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import icon %}
+{% block title %}Categories{% endblock %}
+{% block page_title %}Report Categories{% endblock %}
+{% block content %}
+<div class="grid grid-2 cat-layout">
+  <div class="card">
+    <div class="card-header"><h3 class="card-title">Add category</h3></div>
+    <form method="post" novalidate>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="add">
+      <div class="form-group"><label class="form-label" for="name">Category name</label><input class="form-control" id="name" name="name" maxlength="40" required placeholder="e.g. Vaccination Record"></div>
+      <div class="form-group"><span class="form-label">Icon</span>
+        <div class="icon-picker">{% for ic in icons %}<label><input type="radio" name="icon" value="{{ ic }}" {{ 'checked' if loop.first }}><span>{{ icon(ic) }}</span></label>{% endfor %}</div></div>
+      <button class="btn btn-primary" type="submit">{{ icon('plus') }} Add category</button>
+    </form>
+  </div>
+  <div class="card">
+    <div class="card-header"><h3 class="card-title">All categories</h3></div>
+    <div class="cat-list">
+      {% for c in categories %}
+      <div class="cat-item">
+        <span class="cat-icon">{{ icon(c.icon) }}</span>
+        <form method="post" class="cat-rename">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="rename"><input type="hidden" name="category_id" value="{{ c.id }}">
+          <input class="form-control" name="name" value="{{ c.name }}" maxlength="40" aria-label="Category name"><button class="btn btn-outline btn-sm" type="submit">Rename</button>
+        </form>
+        <span class="chip">{{ c.report_count }} report{{ '' if c.report_count == 1 else 's' }}</span>
+        <form method="post" data-confirm="Delete the category “{{ c.name }}”?">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="delete"><input type="hidden" name="category_id" value="{{ c.id }}">
+          <button class="btn btn-ghost btn-icon danger-text" type="submit" title="Delete" {{ 'disabled' if c.report_count or c.name == 'Other' }}>{{ icon('trash') }}</button></form>
+      </div>{% endfor %}
+    </div>
+    <p class="muted small">Categories that contain reports (and “Other”) cannot be deleted.</p>
+  </div>
+</div>
+{% endblock %}

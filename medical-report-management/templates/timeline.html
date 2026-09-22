@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import icon, empty_state %}
+{% block title %}Medical Timeline{% endblock %}
+{% block page_title %}Medical Timeline{% endblock %}
+{% block content %}
+{% if years %}
+<div class="timeline">
+  {% for y in years %}
+  <div class="tl-year reveal"><span>{{ y.year }}</span></div>
+  {% for mth in y.months %}
+    <div class="tl-month reveal">{{ mth.name }}</div>
+    {% for r in mth.reports %}
+    <div class="tl-item reveal">
+      <span class="tl-dot">{{ icon(r.category_icon) }}</span>
+      <a class="tl-card" href="{{ url_for('patient.report_details', report_id=r.id) }}">
+        <div class="tl-top"><strong>{{ r.title }}</strong>{% if r.is_important %}<span class="badge badge-star">{{ icon('star') }}</span>{% endif %}</div>
+        <div class="tl-meta">
+          <span>{{ icon('calendar') }} {{ r.report_date|fmt_date }}</span>
+          <span>{{ icon('building') }} {{ r.hospital_name or r.laboratory_name or '—' }}</span>
+          <span>{{ icon('user') }} {{ r.doctor_name or '—' }}</span>
+        </div>
+        <span class="chip">{{ r.category_name }}</span>
+      </a>
+    </div>
+    {% endfor %}
+  {% endfor %}
+  {% endfor %}
+</div>
+{% else %}
+<div class="card">{{ empty_state('clock', 'No Medical Reports Yet', 'Upload your first report to start building your medical history.', 'Upload report', url_for('patient.upload_report')) }}</div>
+{% endif %}
+{% endblock %}

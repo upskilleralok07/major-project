@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import icon, status_badge, empty_state %}
+{% block title %}Doctor Dashboard{% endblock %}
+{% block page_title %}Doctor Dashboard{% endblock %}
+{% block content %}
+<section class="welcome"><div><h2>Welcome, {{ current_user.name }}</h2><p>You can only see reports that patients have explicitly shared with you.</p></div>
+  <a class="btn btn-primary" href="{{ url_for('doctor.reports') }}">{{ icon('folder') }} All shared reports</a></section>
+<section class="grid grid-4 stagger">
+  <div class="stat-card"><div class="stat-icon blue">{{ icon('share') }}</div><div><div class="stat-value" data-count="{{ total }}">0</div><div class="stat-label">Total Shared Reports</div></div></div>
+  <div class="stat-card"><div class="stat-icon green">{{ icon('check') }}</div><div><div class="stat-value" data-count="{{ active }}">0</div><div class="stat-label">Active Shares</div></div></div>
+  <div class="stat-card"><div class="stat-icon amber">{{ icon('clock') }}</div><div><div class="stat-value" data-count="{{ expired }}">0</div><div class="stat-label">Expired Shares</div></div></div>
+  <div class="stat-card"><div class="stat-icon red">{{ icon('x') }}</div><div><div class="stat-value" data-count="{{ revoked }}">0</div><div class="stat-label">Revoked Shares</div></div></div>
+</section>
+<section class="card">
+  <div class="card-header"><h3 class="card-title">Recent shared reports</h3><a class="link" href="{{ url_for('doctor.reports') }}">View all</a></div>
+  {% if shares %}
+  <div class="table-wrap"><table class="table responsive"><thead><tr><th>Patient</th><th>Report</th><th>Shared</th><th>Expires</th><th>Status</th><th></th></tr></thead><tbody>
+    {% for s in shares %}<tr>
+      <td data-label="Patient"><strong>{{ s.patient_name }}</strong><div class="row-meta">{{ s.patient_code }}</div></td>
+      <td data-label="Report">{{ s.title }}<div class="row-meta">{{ s.category_name }}</div></td>
+      <td data-label="Shared">{{ s.created_at|fmt_datetime }}</td><td data-label="Expires">{{ s.expires_at|fmt_datetime }}</td>
+      <td data-label="Status">{{ status_badge(s.effective_status) }}</td>
+      <td class="t-actions">{% if s.effective_status == 'active' %}<a class="btn btn-primary btn-sm" href="{{ url_for('doctor.report_details', share_id=s.id) }}">Open</a>{% else %}<span class="muted small">No access</span>{% endif %}</td></tr>{% endfor %}
+  </tbody></table></div>
+  {% else %}{{ empty_state('share', 'Nothing shared with you yet', 'When a patient shares a report with you it will appear here.') }}{% endif %}
+</section>
+{% endblock %}

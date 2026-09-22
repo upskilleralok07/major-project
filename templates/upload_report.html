@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import icon %}
+{% block title %}Upload Report{% endblock %}
+{% block page_title %}Upload Report{% endblock %}
+{% block content %}
+<form id="uploadForm" class="upload-layout" data-action="{{ url_for('patient.upload_report') }}" data-max-mb="{{ max_file_mb }}" novalidate>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="card">
+    <div class="card-header"><h3 class="card-title">1. Choose your report file</h3></div>
+    <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Drag and drop your report here or browse files">
+      <div class="dz-icon">{{ icon('upload') }}</div>
+      <h3>Drag &amp; Drop your report here</h3>
+      <p>or <button type="button" class="link-btn" id="browseBtn">Browse Files</button></p>
+      <small>PDF, JPG, JPEG or PNG · up to {{ max_file_mb }} MB</small>
+      <input type="file" id="fileInput" name="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" hidden>
+    </div>
+    <div class="alert alert-error" id="uploadError" hidden></div>
+    <div class="file-card" id="filePreview" hidden>
+      <div class="file-thumb" id="fileThumb"></div>
+      <div class="grow">
+        <div class="file-name" id="fileName"></div>
+        <div class="file-meta" id="fileMeta"></div>
+        <div class="progress" id="progressWrap" hidden><span id="progressBar"></span></div>
+        <div class="progress-text" id="progressText" hidden>0%</div>
+      </div>
+      <button type="button" class="btn btn-ghost btn-icon" id="removeFile" title="Remove file">{{ icon('x') }}</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h3 class="card-title">2. Report details</h3></div>
+    {% with r = {}, errors = {} %}{% include '_report_fields.html' %}{% endwith %}
+    <div class="btn-row">
+      <button type="submit" class="btn btn-primary btn-lg" id="uploadBtn" disabled>{{ icon('upload') }} Upload report</button>
+      <a class="btn btn-outline btn-lg" href="{{ url_for('patient.reports') }}">Cancel</a>
+    </div>
+  </div>
+</form>
+
+<div class="modal-backdrop" id="dupModal" aria-hidden="true">
+  <div class="modal confirm-modal" role="alertdialog" aria-modal="true">
+    <div class="confirm-icon warn">{{ icon('alert') }}</div>
+    <h3>Possible duplicate report found.</h3>
+    <p>You already uploaded this exact file: <strong id="dupTitle"></strong>. Nothing has been overwritten.</p>
+    <div class="modal-actions stack">
+      <a class="btn btn-outline" id="dupView" href="#">View Existing Report</a>
+      <button class="btn btn-primary" type="button" id="dupUpload">Upload Anyway</button>
+      <button class="btn btn-ghost" type="button" id="dupCancel">Cancel</button>
+    </div>
+  </div>
+</div>
+<div class="success-overlay" id="successOverlay" hidden>
+  <div class="success-card">
+    <svg class="check-anim" viewBox="0 0 52 52"><circle class="check-circle" cx="26" cy="26" r="24" fill="none"/><path class="check-mark" fill="none" d="M14 27l8 8 16-17"/></svg>
+    <h3>Report uploaded!</h3><p>Redirecting to your report…</p>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/upload.js') }}"></script>{% endblock %}

@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import icon %}
+{% block title %}{{ title }}{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+{% set body %}
+<div class="error-state">
+  <div class="error-code">{{ code }}</div>
+  <div class="empty-illustration danger">{{ icon('alert') }}</div>
+  <h2>{{ title }}</h2>
+  <p>{{ message }}</p>
+  <div class="btn-row">
+    <a class="btn btn-primary" href="{{ url_for('auth.index') }}">Go to home</a>
+    <a class="btn btn-outline" href="javascript:history.back()">Go back</a>
+  </div>
+</div>
+{% endset %}
+{% block content %}{{ body }}{% endblock %}
+{% block public %}<div class="auth-page single">{{ body }}</div>{% endblock %}

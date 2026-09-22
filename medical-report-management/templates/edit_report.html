@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import icon %}
+{% block title %}Edit Report{% endblock %}
+{% block page_title %}Edit Report{% endblock %}
+{% block content %}
+<div class="card narrow-card wide">
+  <div class="card-header"><h3 class="card-title">Edit “{{ report.title }}”</h3></div>
+  <p class="muted">The uploaded file ({{ report.file_name }}) stays the same. To use a different file, upload a new report.</p>
+  <form method="post" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    {% with r = report %}{% include '_report_fields.html' %}{% endwith %}
+    <div class="btn-row"><button class="btn btn-primary" type="submit">Save changes</button>
+      <a class="btn btn-outline" href="{{ url_for('patient.report_details', report_id=report.id) }}">Cancel</a></div>
+  </form>
+</div>
+{% endblock %}

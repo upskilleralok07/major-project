@@ -1,0 +1,23 @@
+{% from '_macros.html' import icon %}
+<div id="reportList" data-search-url="{{ url_for('patient.search_reports') }}" data-important-only="{{ '1' if important_only else '0' }}"
+     data-upload-url="{{ url_for('patient.upload_report') }}">
+  <div class="filter-bar card">
+    <div class="search-field">{{ icon('search') }}<input type="search" id="q" placeholder="Search by title, hospital, laboratory or doctor" autocomplete="off"></div>
+    <div class="filter-row">
+      <select class="form-control" id="category" aria-label="Category"><option value="">All categories</option>{% for c in categories %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}</select>
+      <select class="form-control" id="hospital" aria-label="Hospital"><option value="">All hospitals / labs</option></select>
+      <select class="form-control" id="doctor" aria-label="Doctor"><option value="">All doctors</option></select>
+      <input class="form-control" type="date" id="dateFrom" aria-label="From date" title="From date">
+      <input class="form-control" type="date" id="dateTo" aria-label="To date" title="To date">
+      {% if not important_only %}<label class="check chip-check"><input type="checkbox" id="importantOnly"><span>{{ icon('star') }} Important</span></label>{% endif %}
+      <select class="form-control" id="sort" aria-label="Sort"><option value="newest">Newest first</option><option value="oldest">Oldest first</option></select>
+      <button class="btn btn-outline" id="clearFilters" type="button">Clear filters</button>
+    </div>
+  </div>
+  <div class="result-line"><span id="resultCount">Loading…</span>
+    <a class="btn btn-primary btn-sm" href="{{ url_for('patient.upload_report') }}">{{ icon('plus') }} Upload</a></div>
+  <div class="report-grid" id="reportGrid" aria-live="polite">
+    {% for i in range(6) %}<div class="report-card skeleton-card"><div class="sk sk-circle"></div><div class="sk sk-line w60"></div><div class="sk sk-line w80"></div><div class="sk sk-line w40"></div></div>{% endfor %}
+  </div>
+  <div id="emptyHolder" hidden></div>
+</div>

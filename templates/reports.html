@@ -1,0 +1,8 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import icon %}
+{% block title %}My Reports{% endblock %}
+{% block page_title %}My Reports{% endblock %}
+{% block content %}
+{% include '_report_list.html' %}
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/reports.js') }}"></script>{% endblock %}

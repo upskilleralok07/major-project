@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import icon, status_badge, empty_state %}
+{% block title %}Shared Reports{% endblock %}
+{% block page_title %}Shared Reports{% endblock %}
+{% block content %}
+<form class="filter-bar card inline-filters" method="get">
+  <div class="search-field">{{ icon('search') }}<input type="search" name="q" value="{{ q }}" placeholder="Search by patient, report or category"></div>
+  <select class="form-control" name="status" onchange="this.form.submit()">
+    <option value="">All statuses</option>
+    {% for s in ['active','expired','revoked'] %}<option value="{{ s }}" {{ 'selected' if status == s }}>{{ s|capitalize }}</option>{% endfor %}
+  </select>
+  <button class="btn btn-primary" type="submit">Search</button>
+  {% if q or status %}<a class="btn btn-outline" href="{{ url_for('doctor.reports') }}">Clear</a>{% endif %}
+</form>
+<div class="card">
+  {% if shares %}
+  <div class="table-wrap"><table class="table responsive"><thead><tr><th>Patient</th><th>Report</th><th>Report date</th><th>Message</th><th>Expires</th><th>Status</th><th></th></tr></thead><tbody>
+    {% for s in shares %}<tr>
+      <td data-label="Patient"><strong>{{ s.patient_name }}</strong><div class="row-meta">{{ s.patient_code }}</div></td>
+      <td data-label="Report"><span class="row-title-plain">{{ s.title }}</span><div class="row-meta">{{ s.category_name }} · {{ s.hospital_name or s.laboratory_name or '—' }}</div></td>
+      <td data-label="Report date">{{ s.report_date|fmt_date }}</td>
+      <td data-label="Message">{{ s.message or '—' }}</td>
+      <td data-label="Expires">{{ s.expires_at|fmt_datetime }}</td>
+      <td data-label="Status">{{ status_badge(s.effective_status) }}</td>
+      <td class="t-actions">
+        {% if s.effective_status == 'active' %}
+          <a class="btn btn-primary btn-sm" href="{{ url_for('doctor.report_details', share_id=s.id) }}">{{ icon('eye') }} View</a>
+          <a class="btn btn-outline btn-sm" href="{{ url_for('doctor.download', share_id=s.id) }}">{{ icon('download') }}</a>
+        {% else %}<span class="muted small">{{ 'Access expired' if s.effective_status == 'expired' else 'Access revoked' }}</span>{% endif %}
+      </td></tr>{% endfor %}
+  </tbody></table></div>
+  {% else %}{{ empty_state('folder', 'No shared reports found', 'Reports that patients share with you will be listed here.') }}{% endif %}
+</div>
+{% endblock %}

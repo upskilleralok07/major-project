@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import icon %}
+{% block title %}All Your Medical Reports. One Secure Place.{% endblock %}
+{% block body_class %}landing{% endblock %}
+{% block public %}
+<header class="land-nav" id="landNav">
+  <div class="container land-nav-inner">
+    <a class="land-brand" href="{{ url_for('auth.index') }}"><span class="logo">{{ icon('heart') }}</span> MediVault</a>
+    <nav class="land-links" id="landLinks">
+      <a href="#problem">Problem</a><a href="#features">Features</a><a href="#how">How it works</a><a href="#security">Security</a><a href="#roles">Roles</a>
+    </nav>
+    <div class="land-cta">
+      <a class="btn btn-ghost" href="{{ url_for('auth.login') }}">Login</a>
+      <a class="btn btn-primary" href="{{ url_for('auth.register') }}">Get Started</a>
+    </div>
+    <button class="icon-btn land-burger" id="landBurger" aria-label="Menu">{{ icon('menu') }}</button>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="container hero-grid">
+    <div class="hero-text">
+      <span class="pill reveal">{{ icon('shield') }} Secure · Organised · Always available</span>
+      <h1 class="reveal">All Your Medical Reports.<br><span class="grad">One Secure Place.</span></h1>
+      <p class="hero-sub reveal">Organize, access and securely manage your medical reports from hospitals, laboratories and doctors in one place.</p>
+      <div class="btn-row reveal">
+        <a class="btn btn-primary btn-lg" href="{{ url_for('auth.register') }}">Get Started {{ icon('arrow-right') }}</a>
+        <a class="btn btn-outline btn-lg" href="{{ url_for('auth.login') }}">Login</a>
+      </div>
+      <div class="hero-stats reveal">
+        <div><strong>PDF · JPG · PNG</strong><span>Upload any report</span></div>
+        <div><strong>SHA-256</strong><span>Duplicate detection</span></div>
+        <div><strong>Auto-expiry</strong><span>Time-limited sharing</span></div>
+      </div>
+    </div>
+    <div class="hero-visual reveal">
+      <div class="mock-card mock-main">
+        <div class="mock-head"><span class="cat-icon">{{ icon('droplet') }}</span><div><strong>Complete Blood Count</strong><small>Apollo Hospitals · 12 Jun</small></div><span class="badge badge-star">{{ icon('star') }}</span></div>
+        <div class="mock-bar"><span style="width:82%"></span></div>
+        <div class="mock-chips"><span class="chip">Blood Test</span><span class="chip">Pathology</span></div>
+      </div>
+      <div class="mock-card mock-share"><span class="cat-icon green">{{ icon('share') }}</span><div><strong>Shared with Dr. Meena</strong><small>Expires in 6 days</small></div></div>
+      <div class="mock-card mock-tl"><strong>Timeline</strong><div class="mini-tl"><i></i><i></i><i></i></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="problem">
+  <div class="container two-col">
+    <div class="reveal">
+      <span class="eyebrow">The problem</span>
+      <h2>Reports are scattered.<br>Finding one is stressful.</h2>
+      <p class="lead">Patients collect reports from different hospitals, laboratories and doctors. They end up in email attachments, WhatsApp chats, paper folders and phone galleries. When an older report is needed, finding it is difficult and time-consuming.</p>
+    </div>
+    <div class="problem-list reveal">
+      <div>{{ icon('folder') }}<span>Reports stored in many different places</span></div>
+      <div>{{ icon('search-x') }}<span>Old reports are hard to find quickly</span></div>
+      <div>{{ icon('clock') }}<span>No clear history of visits and tests</span></div>
+      <div>{{ icon('share') }}<span>Sharing with doctors is insecure and permanent</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="section alt" id="solution">
+  <div class="container center">
+    <span class="eyebrow reveal">The solution</span>
+    <h2 class="reveal">One centralised, searchable medical vault</h2>
+    <p class="lead narrow reveal">MediVault keeps every report in one organised place, builds your medical history automatically, and lets you share individual reports with doctors for a limited time only.</p>
+  </div>
+</section>
+
+<section class="section" id="features">
+  <div class="container">
+    <div class="center"><span class="eyebrow reveal">Features</span><h2 class="reveal">Everything you need to manage your reports</h2></div>
+    <div class="grid grid-3 features">
+      {% for ic, t, d in [
+        ('upload','Drag & drop upload','Upload PDF, JPG or PNG reports with live progress, preview and validation.'),
+        ('search','Instant search & filters','Find any report by title, hospital, laboratory or doctor in seconds.'),
+        ('clock','Medical timeline','See your whole medical history on a beautiful vertical timeline.'),
+        ('star','Important reports','Star the reports that matter most and open them from one page.'),
+        ('columns','Compare reports','View two reports of the same category side by side.'),
+        ('eye','Preview & print','Preview PDFs and images in a modal – zoom, full screen, download, print.'),
+        ('share','Secure sharing','Share single reports with doctors, add a message and set an expiry.'),
+        ('layers','Duplicate detection','SHA-256 file hashing warns you before uploading the same file twice.'),
+        ('activity','Activity history','Every login, view, download and share is recorded for you.')] %}
+      <div class="feature-card reveal"><div class="f-icon">{{ icon(ic) }}</div><h3>{{ t }}</h3><p>{{ d }}</p></div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="section alt" id="how">
+  <div class="container">
+    <div class="center"><span class="eyebrow reveal">How it works</span><h2 class="reveal">Up and running in four steps</h2></div>
+    <div class="steps">
+      {% for n, t, d in [('1','Create an account','Register as a patient in less than a minute.'),('2','Upload reports','Drag and drop reports from any hospital or lab.'),('3','Organise & search','Categories, filters and timeline keep everything tidy.'),('4','Share safely','Give a doctor access for a limited time and revoke anytime.')] %}
+      <div class="step reveal"><div class="step-n">{{ n }}</div><h3>{{ t }}</h3><p>{{ d }}</p></div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="section" id="security">
+  <div class="container two-col">
+    <div class="security-grid reveal">
+      {% for ic, t in [('lock','Hashed passwords'),('shield','Role-based access'),('clock','Server-side expiry'),('file','Validated uploads')] %}
+      <div class="sec-card">{{ icon(ic) }}<strong>{{ t }}</strong></div>{% endfor %}
+    </div>
+    <div class="reveal">
+      <span class="eyebrow">Security</span>
+      <h2>Built with privacy in mind</h2>
+      <ul class="check-list">
+        <li>{{ icon('check') }} Passwords are hashed with Werkzeug – never stored in plain text</li>
+        <li>{{ icon('check') }} Every report request is authorised on the server</li>
+        <li>{{ icon('check') }} Doctors see only reports explicitly shared with them</li>
+        <li>{{ icon('check') }} Expired or revoked shares are blocked by the backend</li>
+        <li>{{ icon('check') }} File type, MIME type, content and size are validated</li>
+        <li>{{ icon('check') }} CSRF protection on every form</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="section alt" id="roles">
+  <div class="container">
+    <div class="center"><span class="eyebrow reveal">User roles</span><h2 class="reveal">Designed for three kinds of users</h2></div>
+    <div class="grid grid-3">
+      <div class="role-card reveal"><div class="f-icon">{{ icon('user') }}</div><h3>Patient</h3><p>Upload, organise, search, compare and share reports. Full control of their own data.</p></div>
+      <div class="role-card reveal"><div class="f-icon">{{ icon('heart') }}</div><h3>Doctor</h3><p>Open only the reports patients explicitly share – until the share expires or is revoked.</p></div>
+      <div class="role-card reveal"><div class="f-icon">{{ icon('settings') }}</div><h3>Admin</h3><p>Manage users, report categories, statistics and system activity logs.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="cta-box reveal">
+      <h2>Take control of your medical history</h2>
+      <p>Create your free account and upload your first report today.</p>
+      <div class="btn-row center-row"><a class="btn btn-white btn-lg" href="{{ url_for('auth.register') }}">Get Started</a><a class="btn btn-outline-white btn-lg" href="{{ url_for('auth.login') }}">Login</a></div>
+    </div>
+  </div>
+</section>
+
+<footer class="land-footer">
+  <div class="container foot-inner">
+    <div class="land-brand"><span class="logo">{{ icon('heart') }}</span> MediVault</div>
+    <p>Medical Report Management System · College project · Flask + SQLite · Demo data only</p>
+    <small>MediVault does not provide medical advice or diagnosis.</small>
+  </div>
+</footer>
+{% endblock %}

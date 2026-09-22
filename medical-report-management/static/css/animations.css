@@ -1,0 +1,50 @@
+/* ==========================================================
+   MediVault – animations (all disabled by prefers-reduced-motion)
+   ========================================================== */
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+@keyframes slideDown { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+@keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+@keyframes toastIn { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: none; } }
+@keyframes toastOut { to { opacity: 0; transform: translateX(30px); } }
+@keyframes shake { 0%,100% { transform: translateX(0); } 20%,60% { transform: translateX(-6px); } 40%,80% { transform: translateX(6px); } }
+@keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+@keyframes starPop { 0% { transform: scale(1); } 40% { transform: scale(1.6) rotate(12deg); } 70% { transform: scale(.9); } 100% { transform: scale(1); } }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+@keyframes pop { 0% { transform: scale(.6); opacity: 0; } 70% { transform: scale(1.08); } 100% { transform: scale(1); opacity: 1; } }
+@keyframes cardIn { from { opacity: 0; transform: translateY(14px) scale(.98); } to { opacity: 1; transform: none; } }
+@keyframes grow { from { width: 0; } to { width: var(--w); } }
+
+.page-enter { animation: fadeIn .35s ease, slideUp .4s var(--ease); }
+body.leaving .content, body.leaving .auth-card { opacity: 0; transform: translateY(-6px); transition: all .15s ease; }
+.shake { animation: slideUp .5s var(--ease), shake .45s .3s; }
+
+.reveal { opacity: 0; transform: translateY(22px); transition: opacity .6s var(--ease), transform .6s var(--ease); }
+.reveal.visible { opacity: 1; transform: none; }
+.stagger > * { animation: slideUp .5s var(--ease) backwards; }
+.stagger > *:nth-child(2) { animation-delay: .07s; } .stagger > *:nth-child(3) { animation-delay: .14s; } .stagger > *:nth-child(4) { animation-delay: .21s; } .stagger > *:nth-child(5) { animation-delay: .28s; }
+.card:hover { box-shadow: var(--shadow); }
+.report-card.enter { animation: cardIn .35s var(--ease) backwards; }
+.report-card.leaving { opacity: 0; transform: scale(.96); transition: all .2s; }
+
+/* star */
+.star-btn { display: inline-grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; border: 0; background: #f1f5f9; color: #94a3b8; cursor: pointer; font-size: 1.2rem; transition: background .2s, color .2s, transform .15s; }
+.star-btn:hover { background: #fef3c7; color: var(--star); } .star-btn.on { color: var(--star); background: #fef3c7; } .star-btn.on .icon { fill: currentColor; }
+.star-btn.pop .icon { animation: starPop .5s var(--ease); }
+
+/* skeleton */
+.sk, .skeleton-box.loading { background: linear-gradient(90deg, #eef2f7 25%, #f8fafc 37%, #eef2f7 63%); background-size: 400% 100%; animation: shimmer 1.4s linear infinite; border-radius: 8px; }
+.sk-line { height: 12px; margin-top: .7rem; } .sk-circle { width: 42px; height: 42px; border-radius: 12px; } .w40 { width: 40%; } .w60 { width: 60%; } .w80 { width: 80%; }
+.skeleton-box.loading canvas { opacity: 0; }
+
+/* success check */
+.check-anim { width: 90px; height: 90px; }
+.check-circle { stroke: var(--success); stroke-width: 3; stroke-dasharray: 151; stroke-dashoffset: 151; animation: draw .6s ease forwards; }
+.check-mark { stroke: var(--success); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 40; stroke-dashoffset: 40; animation: draw .4s .5s ease forwards; }
+.success-overlay { position: fixed; inset: 0; z-index: 300; display: grid; place-items: center; background: rgba(255,255,255,.85); backdrop-filter: blur(4px); animation: fadeIn .25s; }
+.success-card { text-align: center; animation: pop .45s var(--ease); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
+  .reveal { opacity: 1; transform: none; }
+}

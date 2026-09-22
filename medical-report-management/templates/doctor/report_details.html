@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import icon, status_badge %}
+{% block title %}{{ share.title }}{% endblock %}
+{% block page_title %}Shared report{% endblock %}
+{% block content %}
+{% set pv = url_for('doctor.preview', share_id=share.id) %}
+{% set dl = url_for('doctor.download', share_id=share.id) %}
+<a class="back-link" href="{{ url_for('doctor.reports') }}">{{ icon('chevron-left') }} Back to shared reports</a>
+<div class="detail-head card">
+  <div class="cat-icon lg">{{ icon(share.category_icon) }}</div>
+  <div class="grow"><h2>{{ share.title }}</h2>
+    <div class="row-meta"><span class="chip">{{ share.category_name }}</span> {{ status_badge(share.effective_status) }}</div></div>
+</div>
+<div class="alert alert-info">{{ icon('clock') }} Access expires on <strong>{{ share.expires_at|fmt_datetime }}</strong>. After that you will no longer be able to open or download this report.</div>
+<div class="action-bar">
+  <button class="btn btn-primary js-preview" data-preview-url="{{ pv }}" data-download-url="{{ dl }}" data-type="{{ share.file_type }}" data-title="{{ share.title }}">{{ icon('eye') }} Preview</button>
+  <a class="btn btn-outline" href="{{ dl }}">{{ icon('download') }} Download</a>
+  <button class="btn btn-outline js-print" data-print-url="{{ pv }}">{{ icon('printer') }} Print</button>
+</div>
+<div class="grid detail-grid">
+  <div class="card"><div class="card-header"><h3 class="card-title">Patient &amp; report information</h3></div>
+    <dl class="detail-list">
+      <div><dt>Patient name</dt><dd>{{ share.patient_name }}</dd></div>
+      <div><dt>Patient ID</dt><dd>{{ share.patient_code }}</dd></div>
+      <div><dt>Report date</dt><dd>{{ share.report_date|fmt_date }}</dd></div>
+      <div><dt>Hospital</dt><dd>{{ share.hospital_name or '—' }}</dd></div>
+      <div><dt>Laboratory</dt><dd>{{ share.laboratory_name or '—' }}</dd></div>
+      <div><dt>Issuing doctor</dt><dd>{{ share.report_doctor or '—' }}</dd></div>
+      <div><dt>Shared on</dt><dd>{{ share.created_at|fmt_datetime }}</dd></div>
+      <div><dt>File</dt><dd>{{ share.file_type|upper }} · {{ share.file_size|filesize }}</dd></div>
+      <div class="full"><dt>Message from patient</dt><dd class="pre">{{ share.message or '—' }}</dd></div>
+      <div class="full"><dt>Report notes</dt><dd class="pre">{{ share.notes or '—' }}</dd></div>
+    </dl></div>
+  <div class="card preview-card"><div class="card-header"><h3 class="card-title">Preview</h3></div>
+    <div class="inline-preview">
+      {% if share.file_type == 'pdf' %}<iframe src="{{ pv }}" title="PDF preview"></iframe>{% else %}<img src="{{ pv }}" alt="{{ share.title }}">{% endif %}
+    </div></div>
+</div>
+{% endblock %}

@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import icon, field_error, empty_state %}
+{% block title %}Share Report{% endblock %}
+{% block page_title %}Share Report{% endblock %}
+{% block content %}
+<a class="back-link" href="{{ url_for('patient.report_details', report_id=report.id) }}">{{ icon('chevron-left') }} Back to report</a>
+<div class="grid share-layout">
+  <div class="card">
+    <div class="card-header"><h3 class="card-title">Share “{{ report.title }}”</h3></div>
+    {% if not doctors %}
+      {{ empty_state('user', 'No doctors available', 'There are no active doctor accounts yet. Ask your doctor to register on MediVault.') }}
+    {% else %}
+    <form method="post" novalidate>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="form-group {{ 'has-error' if errors.get('doctor_id') }}">
+        <label class="form-label" for="doctor_id">1. Select doctor</label>
+        <select class="form-control" id="doctor_id" name="doctor_id" required>
+          <option value="">Choose a doctor</option>
+          {% for d in doctors %}<option value="{{ d.id }}" {{ 'selected' if form.get('doctor_id') == d.id|string }}>{{ d.name }}{% if d.specialization %} — {{ d.specialization }}{% endif %}</option>{% endfor %}
+        </select>{{ field_error(errors, 'doctor_id') }}
+      </div>
+      <div class="form-group"><label class="form-label" for="message">2. Message (optional)</label>
+        <textarea class="form-control" id="message" name="message" rows="3" maxlength="500" placeholder="Add a short note for the doctor">{{ form.get('message','') }}</textarea></div>
+      <div class="form-group {{ 'has-error' if errors.get('expiry') }}">
+        <span class="form-label">3. Access expires on</span>
+        <div class="form-row">
+          <input class="form-control" type="date" id="expiry_date" name="expiry_date" min="{{ today }}" required value="{{ form.get('expiry_date', default_date) }}" aria-label="Expiry date">
+          <input class="form-control" type="time" id="expiry_time" name="expiry_time" required value="{{ form.get('expiry_time', default_time) }}" aria-label="Expiry time">
+        </div>
+        <div class="preset-row">
+          <button type="button" class="chip chip-btn" data-add-hours="24">24 hours</button>
+          <button type="button" class="chip chip-btn" data-add-hours="72">3 days</button>
+          <button type="button" class="chip chip-btn" data-add-hours="168">7 days</button>
+          <button type="button" class="chip chip-btn" data-add-hours="720">30 days</button>
+        </div>
+        {{ field_error(errors, 'expiry') }}
+      </div>
+      <div class="btn-row"><button class="btn btn-primary" type="submit">{{ icon('share') }} 4. Confirm sharing</button>
+        <a class="btn btn-outline" href="{{ url_for('patient.report_details', report_id=report.id) }}">Cancel</a></div>
+    </form>
+    {% endif %}
+  </div>
+  <div class="card side-info">
+    <div class="cat-icon lg">{{ icon(report.category_icon) }}</div>
+    <h3>{{ report.title }}</h3>
+    <p class="muted">{{ report.category_name }} · {{ report.report_date|fmt_date }}</p>
+    <ul class="check-list">
+      <li>{{ icon('check') }} Only this report is shared – nothing else</li>
+      <li>{{ icon('check') }} Access stops automatically at the expiry time</li>
+      <li>{{ icon('check') }} You can revoke access at any moment</li>
+    </ul>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/reports.js') }}"></script>{% endblock %}

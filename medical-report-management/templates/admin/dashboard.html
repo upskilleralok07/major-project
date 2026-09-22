@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import icon, action_icon, action_tone %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block page_title %}Admin Dashboard{% endblock %}
+{% block content %}
+<section class="grid grid-5 stagger">
+  <div class="stat-card"><div class="stat-icon blue">{{ icon('users') }}</div><div><div class="stat-value" data-count="{{ stats.users }}">0</div><div class="stat-label">Total Users</div></div></div>
+  <div class="stat-card"><div class="stat-icon teal">{{ icon('user') }}</div><div><div class="stat-value" data-count="{{ stats.patients }}">0</div><div class="stat-label">Patients</div></div></div>
+  <div class="stat-card"><div class="stat-icon violet">{{ icon('heart') }}</div><div><div class="stat-value" data-count="{{ stats.doctors }}">0</div><div class="stat-label">Doctors</div></div></div>
+  <div class="stat-card"><div class="stat-icon amber">{{ icon('file') }}</div><div><div class="stat-value" data-count="{{ stats.reports }}">0</div><div class="stat-label">Total Reports</div></div></div>
+  <div class="stat-card"><div class="stat-icon green">{{ icon('share') }}</div><div><div class="stat-value" data-count="{{ stats.shares }}">0</div><div class="stat-label">Shared Reports</div></div></div>
+</section>
+<section class="grid grid-2">
+  <div class="card"><div class="card-header"><h3 class="card-title">Reports per category</h3><a class="link" href="{{ url_for('admin.categories') }}">Manage</a></div>
+    <div class="bar-list">
+      {% for c in usage %}<div class="bar-row"><span class="bar-label">{{ icon(c.icon) }} {{ c.name }}</span>
+        <div class="bar-track"><span class="bar-fill" style="--w: {{ (c.report_count / top * 100)|round|int }}%"></span></div><strong>{{ c.report_count }}</strong></div>{% endfor %}
+    </div></div>
+  <div class="card"><div class="card-header"><h3 class="card-title">Latest system activity</h3><a class="link" href="{{ url_for('admin.activity') }}">View all</a></div>
+    <div class="activity-list">
+      {% for a in logs %}<div class="activity-item"><span class="act-ic tone-{{ action_tone(a.action) }}">{{ action_icon(a.action) }}</span>
+        <div class="grow"><div class="act-text"><strong>{{ a.actor_name or 'System' }}</strong> · {{ a.action }}</div><div class="act-time">{{ a.created_at|fmt_datetime }}</div></div></div>{% endfor %}
+    </div></div>
+</section>
+{% endblock %}

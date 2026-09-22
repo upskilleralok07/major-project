@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import icon, empty_state %}
+{% block title %}Patient Medical Portal — {{ pat.name }}{% endblock %}
+{% block page_title %}Patient Records (QR Access){% endblock %}
+{% block content %}
+<!-- Patient Information Header -->
+<div class="card" style="margin-bottom: 1.5rem; background: linear-gradient(to right, #f8fafc, #edf2f7); border-left: 4px solid #2563eb;">
+  <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 1rem;">
+    <div>
+      <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+        <div class="avatar xl" style="background: #2563eb; color: white;">{{ pat.name|initials }}</div>
+        <div>
+          <h2 style="margin: 0; font-size: 1.5rem;">{{ pat.name }}</h2>
+          <span class="badge badge-success" style="margin-top: 0.25rem; display: inline-flex; align-items: center; gap: 4px;">
+            {{ icon('check-circle') }} Verified QR Pass
+          </span>
+        </div>
+      </div>
+    </div>
+    <div style="display: flex; gap: 0.5rem;">
+      <a class="btn btn-outline btn-sm" href="{{ url_for('doctor.dashboard') }}">{{ icon('arrow-left') }} Back to Dashboard</a>
+    </div>
+  </div>
+
+  <div class="form-grid" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #cbd5e1;">
+    <div><strong style="color: #64748b; font-size: 0.85rem;">Patient ID</strong><div>{{ pat.patient_code }}</div></div>
+    <div><strong style="color: #64748b; font-size: 0.85rem;">Age & Gender</strong><div>{{ pat.age if pat.age is not none else '—' }} yrs · {{ pat.gender or '—' }}</div></div>
+    <div><strong style="color: #64748b; font-size: 0.85rem;">Phone Number</strong><div>{{ pat.phone or '—' }}</div></div>
+    <div><strong style="color: #64748b; font-size: 0.85rem;">Emergency Contact</strong><div>{{ pat.emergency_contact or '—' }}</div></div>
+    <div class="span-2"><strong style="color: #64748b; font-size: 0.85rem;">Basic Medical Info</strong><div style="white-space: pre-line;">{{ pat.medical_info or 'No critical medical conditions noted.' }}</div></div>
+  </div>
+</div>
+
+<!-- Search & Filter Bar -->
+<form class="filter-bar card inline-filters" method="get">
+  <div class="search-field">{{ icon('search') }}<input type="search" name="q" value="{{ q }}" placeholder="Search by report title, hospital, or doctor"></div>
+  <select class="form-control" name="category" onchange="this.form.submit()">
+    <option value="">All categories</option>
+    {% for c in categories %}
+      <option value="{{ c.id }}" {{ 'selected' if category == c.id|string }}>{{ c.name }}</option>
+    {% endfor %}
+  </select>
+  <button class="btn btn-primary" type="submit">Filter</button>
+  {% if q or category %}<a class="btn btn-outline" href="{{ url_for('doctor.qr_access', qr_token=qr_token) }}">Clear</a>{% endif %}
+</form>
+
+<!-- Reports List -->
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title">Available Medical Reports ({{ reports|length }})</h3>
+  </div>
+  {% if reports %}
+  <div class="table-wrap">
+    <table class="table responsive">
+      <thead>
+        <tr>
+          <th>Title & Category</th>
+          <th>Report Date</th>
+          <th>Hospital / Lab</th>
+          <th>Doctor</th>
+          <th>File</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in reports %}
+        <tr>
+          <td data-label="Title & Category">
+            <strong>{{ r.title }}</strong>
+            {% if r.is_important %}
+              <span class="badge badge-warning" style="font-size: 0.75rem; margin-left: 4px;">Important</span>
+            {% endif %}
+            <div class="row-meta">{{ r.category_name }}</div>
+          </td>
+          <td data-label="Report Date">{{ r.report_date|fmt_date }}</td>
+          <td data-label="Hospital / Lab">{{ r.hospital_name or r.laboratory_name or '—' }}</td>
+          <td data-label="Doctor">{{ r.doctor_name or '—' }}</td>
+          <td data-label="File">{{ r.file_type|upper }} · {{ r.file_size|filesize }}</td>
+          <td class="t-actions">
+            <a class="btn btn-primary btn-sm" href="{{ url_for('doctor.qr_report_preview', qr_token=qr_token, report_id=r.id) }}" target="_blank">
+              {{ icon('eye') }} Preview
+            </a>
+            <a class="btn btn-outline btn-sm" href="{{ url_for('doctor.qr_report_download', qr_token=qr_token, report_id=r.id) }}">
+              {{ icon('download') }} Download
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    {{ empty_state('folder', 'No medical reports found', 'No uploaded reports match your search criteria.') }}
+  {% endif %}
+</div>
+{% endblock %}

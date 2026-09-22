@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import icon, status_badge, empty_state %}
+{% block title %}Shared Reports{% endblock %}
+{% block page_title %}Shared Reports{% endblock %}
+{% block content %}
+{% if shares %}
+<div class="tabs" id="shareTabs">
+  <button class="tab active" data-filter="all">All ({{ shares|length }})</button>
+  <button class="tab" data-filter="active">Active ({{ shares|selectattr('effective_status','equalto','active')|list|length }})</button>
+  <button class="tab" data-filter="expired">Expired ({{ shares|selectattr('effective_status','equalto','expired')|list|length }})</button>
+  <button class="tab" data-filter="revoked">Revoked ({{ shares|selectattr('effective_status','equalto','revoked')|list|length }})</button>
+</div>
+<div class="card">
+  <div class="table-wrap"><table class="table responsive">
+    <thead><tr><th>Report</th><th>Doctor</th><th>Shared on</th><th>Expires</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+    {% for s in shares %}
+      <tr data-status="{{ s.effective_status }}">
+        <td data-label="Report"><a class="row-title" href="{{ url_for('patient.report_details', report_id=s.report_id) }}">{{ s.title }}</a>
+          {% if s.message %}<div class="row-meta">“{{ s.message }}”</div>{% endif %}</td>
+        <td data-label="Doctor">{{ s.doctor_name }}</td>
+        <td data-label="Shared on">{{ s.created_at|fmt_datetime }}</td>
+        <td data-label="Expires">{{ s.expires_at|fmt_datetime }}</td>
+        <td data-label="Status">{{ status_badge(s.effective_status) }}</td>
+        <td class="t-actions">
+          {% if s.effective_status == 'active' %}
+          <form method="post" action="{{ url_for('patient.revoke_share', share_id=s.id) }}" data-confirm="{{ s.doctor_name }} will immediately lose access to “{{ s.title }}”.">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-danger-outline btn-sm" type="submit">Revoke</button></form>
+          {% else %}<a class="btn btn-outline btn-sm" href="{{ url_for('patient.share_report', report_id=s.report_id) }}">Share again</a>{% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody></table></div>
+</div>
+{% else %}
+<div class="card">{{ empty_state('share', 'No shared reports', 'Open any report and choose Share to give a doctor time-limited access.', 'View my reports', url_for('patient.reports')) }}</div>
+{% endif %}
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/reports.js') }}"></script>{% endblock %}

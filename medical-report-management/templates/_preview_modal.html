@@ -1,0 +1,27 @@
+{% from '_macros.html' import icon %}
+<div class="modal-backdrop" id="previewModal" aria-hidden="true">
+  <div class="modal preview-modal" role="dialog" aria-modal="true" aria-labelledby="previewTitle">
+    <div class="preview-toolbar">
+      <div class="grow"><strong id="previewTitle">Preview</strong></div>
+      <button class="btn btn-ghost btn-icon" data-pv="zoom-out" title="Zoom out">{{ icon('zoom-out') }}</button>
+      <span class="zoom-label" id="zoomLabel">100%</span>
+      <button class="btn btn-ghost btn-icon" data-pv="zoom-in" title="Zoom in">{{ icon('zoom-in') }}</button>
+      <button class="btn btn-ghost btn-icon" data-pv="fullscreen" title="Full screen">{{ icon('maximize') }}</button>
+      <a class="btn btn-ghost btn-icon" id="pvDownload" href="#" title="Download">{{ icon('download') }}</a>
+      <button class="btn btn-ghost btn-icon" data-pv="print" title="Print">{{ icon('printer') }}</button>
+      <button class="btn btn-ghost btn-icon" data-pv="close" title="Close">{{ icon('x') }}</button>
+    </div>
+    <div class="preview-body" id="previewBody"></div>
+  </div>
+</div>
+<div class="modal-backdrop" id="confirmModal" aria-hidden="true">
+  <div class="modal confirm-modal" role="alertdialog" aria-modal="true">
+    <div class="confirm-icon">{{ icon('alert') }}</div>
+    <h3 id="confirmTitle">Are you sure?</h3>
+    <p id="confirmText"></p>
+    <div class="modal-actions">
+      <button class="btn btn-outline" data-confirm-cancel>Cancel</button>
+      <button class="btn btn-danger" data-confirm-ok>Yes, continue</button>
+    </div>
+  </div>
+</div>

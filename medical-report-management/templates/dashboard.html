@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import icon, report_row, empty_state, action_icon, action_tone %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block content %}
+<section class="welcome">
+  <div>
+    <h2>Hello, {{ current_user.name.split()[0] }} 👋</h2>
+    <p>Here is a summary of your medical reports.</p>
+  </div>
+  <a class="btn btn-primary" href="{{ url_for('patient.upload_report') }}">{{ icon('plus') }} Upload report</a>
+</section>
+
+<section class="grid grid-4 stagger">
+  <div class="stat-card"><div class="stat-icon blue">{{ icon('file') }}</div><div><div class="stat-value" data-count="{{ stats.total }}">0</div><div class="stat-label">Total Reports</div></div></div>
+  <div class="stat-card"><div class="stat-icon amber">{{ icon('star') }}</div><div><div class="stat-value" data-count="{{ stats.important }}">0</div><div class="stat-label">Important Reports</div></div></div>
+  <div class="stat-card"><div class="stat-icon teal">{{ icon('building') }}</div><div><div class="stat-value" data-count="{{ stats.hospitals }}">0</div><div class="stat-label">Hospitals</div></div></div>
+  <div class="stat-card"><div class="stat-icon violet">{{ icon('user') }}</div><div><div class="stat-value" data-count="{{ stats.doctors }}">0</div><div class="stat-label">Doctors</div></div></div>
+</section>
+
+<section class="section-block">
+  <h3 class="block-title">Quick actions</h3>
+  <div class="grid grid-4 stagger">
+    <a class="quick-card" href="{{ url_for('patient.upload_report') }}"><span class="q-ic">{{ icon('upload') }}</span><strong>Upload Report</strong><small>Add a new report</small></a>
+    <a class="quick-card" href="{{ url_for('patient.reports') }}"><span class="q-ic">{{ icon('file') }}</span><strong>View Reports</strong><small>Search & filter</small></a>
+    <a class="quick-card" href="{{ url_for('patient.timeline') }}"><span class="q-ic">{{ icon('clock') }}</span><strong>Medical Timeline</strong><small>Your history</small></a>
+    <a class="quick-card" href="{{ url_for('patient.shared_reports') }}"><span class="q-ic">{{ icon('share') }}</span><strong>Shared Reports</strong><small>{{ active_shares }} active share{{ '' if active_shares == 1 else 's' }}</small></a>
+  </div>
+</section>
+
+<section class="grid grid-2 charts">
+  <div class="card"><div class="card-header"><h3 class="card-title">Reports by category</h3></div>
+    <div class="chart-box skeleton-box" id="catChartBox"><canvas id="categoryChart"></canvas></div></div>
+  <div class="card"><div class="card-header"><h3 class="card-title">Reports over time</h3></div>
+    <div class="chart-box skeleton-box" id="timeChartBox"><canvas id="timeChart"></canvas></div></div>
+</section>
+
+<section class="grid grid-2">
+  <div class="card">
+    <div class="card-header"><h3 class="card-title">Recent reports</h3><a class="link" href="{{ url_for('patient.reports') }}">View all</a></div>
+    {% for r in recent %}{{ report_row(r) }}{% else %}
+      {{ empty_state('file', 'No Medical Reports Yet', 'Upload your first report to start building your medical history.', 'Upload report', url_for('patient.upload_report')) }}
+    {% endfor %}
+  </div>
+  <div class="card">
+    <div class="card-header"><h3 class="card-title">Important reports</h3><a class="link" href="{{ url_for('patient.important_reports') }}">View all</a></div>
+    {% for r in important %}{{ report_row(r) }}{% else %}
+      {{ empty_state('star', 'No important reports', 'Tap the star on any report to keep it here for quick access.') }}
+    {% endfor %}
+  </div>
+</section>
+
+<section class="card">
+  <div class="card-header"><h3 class="card-title">Latest activity</h3><a class="link" href="{{ url_for('patient.activities') }}">Full history</a></div>
+  <div class="activity-list">
+    {% for a in activities %}
+    <div class="activity-item"><span class="act-ic tone-{{ action_tone(a.action) }}">{{ action_icon(a.action) }}</span>
+      <div class="grow"><div class="act-text">{{ a.details or a.action }}</div><div class="act-time">{{ a.created_at|fmt_datetime }}</div></div></div>
+    {% else %}<p class="muted pad">No activity yet.</p>{% endfor %}
+  </div>
+</section>
+
+<script type="application/json" id="chartData">{{ chart_data|tojson }}</script>
+{% endblock %}
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

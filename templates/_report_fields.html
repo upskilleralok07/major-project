@@ -1,0 +1,32 @@
+{# Shared by upload_report.html and edit_report.html. Expects: r (dict), errors (dict), categories, today #}
+{% from '_macros.html' import icon, field_error %}
+<div class="form-grid">
+  <div class="form-group span-2 {{ 'has-error' if errors.get('title') }}">
+    <label class="form-label" for="title">Report title *</label>
+    <input class="form-control" type="text" id="title" name="title" maxlength="150" required value="{{ r.get('title','') }}" placeholder="e.g. Complete Blood Count">
+    {{ field_error(errors, 'title') }}
+  </div>
+  <div class="form-group {{ 'has-error' if errors.get('category_id') }}">
+    <label class="form-label" for="category_id">Category *</label>
+    <select class="form-control" id="category_id" name="category_id" required>
+      <option value="">Select category</option>
+      {% for c in categories %}<option value="{{ c.id }}" {{ 'selected' if r.get('category_id') == c.id }}>{{ c.name }}</option>{% endfor %}
+    </select>{{ field_error(errors, 'category_id') }}
+  </div>
+  <div class="form-group {{ 'has-error' if errors.get('report_date') }}">
+    <label class="form-label" for="report_date">Report date *</label>
+    <input class="form-control" type="date" id="report_date" name="report_date" required max="{{ today }}" value="{{ r.get('report_date', today) }}">
+    {{ field_error(errors, 'report_date') }}
+  </div>
+  <div class="form-group"><label class="form-label" for="hospital_name">Hospital name</label>
+    <input class="form-control" type="text" id="hospital_name" name="hospital_name" maxlength="120" value="{{ r.get('hospital_name') or '' }}" placeholder="e.g. Apollo Hospitals"></div>
+  <div class="form-group"><label class="form-label" for="laboratory_name">Laboratory name</label>
+    <input class="form-control" type="text" id="laboratory_name" name="laboratory_name" maxlength="120" value="{{ r.get('laboratory_name') or '' }}" placeholder="e.g. MetroLab Diagnostics"></div>
+  <div class="form-group"><label class="form-label" for="doctor_name">Doctor name</label>
+    <input class="form-control" type="text" id="doctor_name" name="doctor_name" maxlength="120" value="{{ r.get('doctor_name') or '' }}" placeholder="e.g. Dr. Meena Raghavan"></div>
+  <div class="form-group"><label class="form-label" for="department">Department</label>
+    <input class="form-control" type="text" id="department" name="department" maxlength="120" value="{{ r.get('department') or '' }}" placeholder="e.g. Pathology"></div>
+  <div class="form-group span-2"><label class="form-label" for="notes">Description / notes</label>
+    <textarea class="form-control" id="notes" name="notes" rows="3" maxlength="2000" placeholder="Anything you want to remember about this report">{{ r.get('notes') or '' }}</textarea></div>
+  <label class="check span-2 star-check"><input type="checkbox" name="is_important" value="1" {{ 'checked' if r.get('is_important') }}> <span>{{ icon('star') }} Mark as important</span></label>
+</div>

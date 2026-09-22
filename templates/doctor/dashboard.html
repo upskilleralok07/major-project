@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import icon, status_badge, empty_state %}
+{% block title %}Doctor Dashboard{% endblock %}
+{% block page_title %}Doctor Dashboard{% endblock %}
+{% block content %}
+<section class="welcome">
+  <div>
+    <h2>Welcome, {{ current_user.name }}</h2>
+    <p>View reports explicitly shared with you or scan a patient's Medical Health Pass QR Code.</p>
+  </div>
+  <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center;">
+    <button class="btn btn-primary" onclick="openScannerModal()" type="button" style="background: linear-gradient(135deg, #2563eb, #1d4ed8); border: none;">
+      {{ icon('qr-code') }} Scan Patient QR Code
+    </button>
+    <a class="btn btn-outline" href="{{ url_for('doctor.reports') }}">{{ icon('folder') }} All shared reports</a>
+  </div>
+</section>
+
+<section class="grid grid-4 stagger">
+  <div class="stat-card"><div class="stat-icon blue">{{ icon('share') }}</div><div><div class="stat-value" data-count="{{ total }}">0</div><div class="stat-label">Total Shared Reports</div></div></div>
+  <div class="stat-card"><div class="stat-icon green">{{ icon('check') }}</div><div><div class="stat-value" data-count="{{ active }}">0</div><div class="stat-label">Active Shares</div></div></div>
+  <div class="stat-card"><div class="stat-icon amber">{{ icon('clock') }}</div><div><div class="stat-value" data-count="{{ expired }}">0</div><div class="stat-label">Expired Shares</div></div></div>
+  <div class="stat-card"><div class="stat-icon red">{{ icon('x') }}</div><div><div class="stat-value" data-count="{{ revoked }}">0</div><div class="stat-label">Revoked Shares</div></div></div>
+</section>
+
+<section class="card">
+  <div class="card-header"><h3 class="card-title">Recent shared reports</h3><a class="link" href="{{ url_for('doctor.reports') }}">View all</a></div>
+  {% if shares %}
+  <div class="table-wrap"><table class="table responsive"><thead><tr><th>Patient</th><th>Report</th><th>Shared</th><th>Expires</th><th>Status</th><th></th></tr></thead><tbody>
+    {% for s in shares %}<tr>
+      <td data-label="Patient"><strong>{{ s.patient_name }}</strong><div class="row-meta">{{ s.patient_code }}</div></td>
+      <td data-label="Report">{{ s.title }}<div class="row-meta">{{ s.category_name }}</div></td>
+      <td data-label="Shared">{{ s.created_at|fmt_datetime }}</td><td data-label="Expires">{{ s.expires_at|fmt_datetime }}</td>
+      <td data-label="Status">{{ status_badge(s.effective_status) }}</td>
+      <td class="t-actions">{% if s.effective_status == 'active' %}<a class="btn btn-primary btn-sm" href="{{ url_for('doctor.report_details', share_id=s.id) }}">Open</a>{% else %}<span class="muted small">No access</span>{% endif %}</td></tr>{% endfor %}
+  </tbody></table></div>
+  {% else %}{{ empty_state('share', 'Nothing shared with you yet', 'When a patient shares a report with you it will appear here.') }}{% endif %}
+</section>
+
+<!-- QR Scanner Modal -->
+<div id="scannerModal" class="modal-backdrop" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.65); z-index:9999; justify-content:center; align-items:center;">
+  <div class="card" style="max-width: 480px; width: 92%; padding: 1.5rem; position: relative;">
+    <button onclick="closeScannerModal()" style="position:absolute; top:12px; right:16px; background:none; border:none; font-size:1.5rem; cursor:pointer; color:#64748b;">&times;</button>
+    <h3 style="margin-bottom: 0.25rem;">Scan Patient Health Pass</h3>
+    <p class="muted" style="font-size: 0.85rem; margin-bottom: 1.25rem;">Use camera scanner or enter patient QR token/link to access all medical reports.</p>
+    
+    <!-- Camera Scanner Area -->
+    <div id="cameraArea" style="background: #0f172a; border-radius: 12px; height: 220px; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; overflow: hidden; margin-bottom: 1rem;">
+      <video id="qrVideo" style="width: 100%; height: 100%; object-fit: cover; display: none;" playsinline></video>
+      <canvas id="qrCanvas" style="display:none;"></canvas>
+      <div id="camPlaceholder" style="text-align: center; color: #94a3b8; padding: 1rem;">
+        <p style="margin-bottom: 0.75rem; font-size: 0.85rem;">Click below to activate device camera scanner</p>
+        <button class="btn btn-primary btn-sm" onclick="startCamera()" type="button">Start Camera Scanner</button>
+      </div>
+    </div>
+
+    <!-- Manual Input Form -->
+    <form onsubmit="handleManualQrSubmit(event)" style="display: flex; flex-direction: column; gap: 0.75rem;">
+      <div class="form-group" style="margin: 0;">
+        <label class="form-label" style="font-size: 0.85rem;">Or Enter QR Access Token / Link</label>
+        <div style="display: flex; gap: 0.5rem;">
+          <input class="form-control" id="qrInput" placeholder="Paste QR link or token (e.g. abc123xyz...)" required style="flex: 1;">
+          <button class="btn btn-primary" type="submit">Access</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script>
+  let videoStream = null;
+  let animFrame = null;
+
+  function openScannerModal() {
+    document.getElementById('scannerModal').style.display = 'flex';
+  }
+
+  function closeScannerModal() {
+    stopCamera();
+    document.getElementById('scannerModal').style.display = 'none';
+  }
+
+  function startCamera() {
+    const video = document.getElementById('qrVideo');
+    const placeholder = document.getElementById('camPlaceholder');
+    
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      alert("Camera access is not supported by your browser.");
+      return;
+    }
+
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+      .then(stream => {
+        videoStream = stream;
+        video.srcObject = stream;
+        video.setAttribute("playsinline", true);
+        video.style.display = "block";
+        placeholder.style.display = "none";
+        video.play();
+        requestAnimationFrame(scanQrFrame);
+      })
+      .catch(err => {
+        alert("Could not access camera: " + (err.message || "Permission denied."));
+      });
+  }
+
+  function stopCamera() {
+    if (videoStream) {
+      videoStream.getTracks().forEach(track => track.stop());
+      videoStream = null;
+    }
+    if (animFrame) {
+      cancelAnimationFrame(animFrame);
+    }
+    document.getElementById('qrVideo').style.display = "none";
+    document.getElementById('camPlaceholder').style.display = "block";
+  }
+
+  function scanQrFrame() {
+    const video = document.getElementById('qrVideo');
+    const canvas = document.getElementById('qrCanvas');
+    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+      canvas.height = video.videoHeight;
+      canvas.width = video.videoWidth;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      if (typeof jsQR !== "undefined") {
+        const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "dontInvert" });
+        if (code && code.data) {
+          stopCamera();
+          navigateToQrAccess(code.data);
+          return;
+        }
+      }
+    }
+    animFrame = requestAnimationFrame(scanQrFrame);
+  }
+
+  function handleManualQrSubmit(e) {
+    e.preventDefault();
+    const val = document.getElementById('qrInput').value.trim();
+    if (val) {
+      navigateToQrAccess(val);
+    }
+  }
+
+  function navigateToQrAccess(input) {
+    if (input.includes('/doctor/qr-access/')) {
+      window.location.href = input;
+    } else {
+      const parts = input.split('/');
+      const token = parts[parts.length - 1];
+      window.location.href = "/doctor/qr-access/" + encodeURIComponent(token);
+    }
+  }
+</script>
+{% endblock %}

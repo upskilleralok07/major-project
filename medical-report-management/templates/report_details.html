@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import icon, status_badge %}
+{% block title %}{{ report.title }}{% endblock %}
+{% block page_title %}Report details{% endblock %}
+{% block content %}
+{% set pv = url_for('patient.preview_report', report_id=report.id) %}
+{% set dl = url_for('patient.download_report', report_id=report.id) %}
+<a class="back-link" href="{{ url_for('patient.reports') }}">{{ icon('chevron-left') }} Back to reports</a>
+<div class="detail-head card">
+  <div class="cat-icon lg">{{ icon(report.category_icon) }}</div>
+  <div class="grow">
+    <h2>{{ report.title }}</h2>
+    <div class="row-meta"><span class="chip">{{ report.category_name }}</span> <span class="chip">{{ report.file_type|upper }}</span>
+      <span class="chip">{{ report.file_size|filesize }}</span></div>
+  </div>
+  <button class="star-btn {{ 'on' if report.is_important }}" data-url="{{ url_for('patient.toggle_important', report_id=report.id) }}" aria-pressed="{{ 'true' if report.is_important else 'false' }}" title="Mark as important">{{ icon('star') }}</button>
+</div>
+<div class="action-bar">
+  <button class="btn btn-primary js-preview" data-preview-url="{{ pv }}" data-download-url="{{ dl }}" data-type="{{ report.file_type }}" data-title="{{ report.title }}">{{ icon('eye') }} Preview</button>
+  <a class="btn btn-outline" href="{{ dl }}">{{ icon('download') }} Download</a>
+  <button class="btn btn-outline js-print" data-print-url="{{ pv }}">{{ icon('printer') }} Print</button>
+  <a class="btn btn-outline" href="{{ url_for('patient.share_report', report_id=report.id) }}">{{ icon('share') }} Share</a>
+  <a class="btn btn-outline" href="{{ url_for('patient.edit_report', report_id=report.id) }}">{{ icon('edit') }} Edit</a>
+  <form method="post" action="{{ url_for('patient.delete_report', report_id=report.id) }}" data-confirm="This will permanently delete the report and its file, and remove all sharing. This cannot be undone.">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="btn btn-danger-outline" type="submit">{{ icon('trash') }} Delete</button></form>
+</div>
+
+<div class="grid detail-grid">
+  <div class="card">
+    <div class="card-header"><h3 class="card-title">Report information</h3></div>
+    <dl class="detail-list">
+      <div><dt>Report ID</dt><dd>#{{ report.id }}</dd></div>
+      <div><dt>Report date</dt><dd>{{ report.report_date|fmt_date }}</dd></div>
+      <div><dt>Hospital</dt><dd>{{ report.hospital_name or '—' }}</dd></div>
+      <div><dt>Laboratory</dt><dd>{{ report.laboratory_name or '—' }}</dd></div>
+      <div><dt>Doctor</dt><dd>{{ report.doctor_name or '—' }}</dd></div>
+      <div><dt>Department</dt><dd>{{ report.department or '—' }}</dd></div>
+      <div><dt>File name</dt><dd class="break">{{ report.file_name }}</dd></div>
+      <div><dt>File type / size</dt><dd>{{ report.file_type|upper }} · {{ report.file_size|filesize }}</dd></div>
+      <div><dt>Uploaded</dt><dd>{{ report.uploaded_at|fmt_datetime }}</dd></div>
+      <div><dt>Last updated</dt><dd>{{ report.updated_at|fmt_datetime }}</dd></div>
+      <div class="full"><dt>Notes</dt><dd class="pre">{{ report.notes or 'No notes added.' }}</dd></div>
+    </dl>
+  </div>
+  <div class="card preview-card">
+    <div class="card-header"><h3 class="card-title">Preview</h3></div>
+    <div class="inline-preview">
+      {% if report.file_type == 'pdf' %}<iframe src="{{ pv }}" title="PDF preview"></iframe>
+      {% else %}<img src="{{ pv }}" alt="{{ report.title }}">{% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><h3 class="card-title">Sharing history</h3><a class="link" href="{{ url_for('patient.share_report', report_id=report.id) }}">Share with a doctor</a></div>
+  {% if shares %}
+  <div class="table-wrap"><table class="table"><thead><tr><th>Doctor</th><th>Shared on</th><th>Expires</th><th>Status</th><th></th></tr></thead><tbody>
+    {% for s in shares %}<tr><td data-label="Doctor">{{ s.doctor_name }}</td><td data-label="Shared on">{{ s.created_at|fmt_datetime }}</td><td data-label="Expires">{{ s.expires_at|fmt_datetime }}</td>
+      <td data-label="Status">{{ status_badge(s.effective_status) }}</td>
+      <td class="t-actions">{% if s.effective_status == 'active' %}
+        <form method="post" action="{{ url_for('patient.revoke_share', share_id=s.id) }}" data-confirm="The doctor will immediately lose access to this report.">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-danger-outline btn-sm">Revoke</button></form>{% endif %}</td></tr>{% endfor %}
+  </tbody></table></div>
+  {% else %}<p class="muted pad">This report is private. It has not been shared with anyone.</p>{% endif %}
+</div>
+{% endblock %}

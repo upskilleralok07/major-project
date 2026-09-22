@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import icon, field_error %}
+{% block title %}Profile{% endblock %}
+{% block page_title %}{{ 'Edit profile' if editing else 'My profile' }}{% endblock %}
+{% block content %}
+<div class="profile-layout">
+  <div class="card profile-side">
+    <div class="avatar xl">{{ current_user.name|initials }}</div>
+    <h2>{{ current_user.name }}</h2>
+    <span class="badge badge-info">{{ current_user.role|capitalize }}</span>
+    {% if pat %}<p class="muted">Patient ID: <strong>{{ pat.patient_code }}</strong></p>{% endif %}
+    <p class="muted">{{ current_user.email }}</p>
+  </div>
+  <div class="card">
+    {% if not editing %}
+      <div class="card-header"><h3 class="card-title">Personal information</h3><a class="btn btn-outline btn-sm" href="{{ url_for('patient.edit_profile') }}">{{ icon('edit') }} Edit profile</a></div>
+      <dl class="detail-list">
+        {% if pat %}<div><dt>Patient ID</dt><dd>{{ pat.patient_code }}</dd></div>{% endif %}
+        <div><dt>Full name</dt><dd>{{ current_user.name }}</dd></div>
+        {% if pat %}<div><dt>Age</dt><dd>{{ pat.age if pat.age is not none else '—' }}</dd></div>
+        <div><dt>Gender</dt><dd>{{ pat.gender or '—' }}</dd></div>{% endif %}
+        <div><dt>Phone</dt><dd>{{ current_user.phone or '—' }}</dd></div>
+        <div><dt>Email</dt><dd>{{ current_user.email }}</dd></div>
+        {% if pat %}<div><dt>Address</dt><dd>{{ pat.address or '—' }}</dd></div>
+        <div><dt>Emergency contact</dt><dd>{{ pat.emergency_contact or '—' }}</dd></div>
+        <div class="full"><dt>Basic medical information</dt><dd class="pre">{{ pat.medical_info or '—' }}</dd></div>{% endif %}
+        {% if doc %}<div><dt>Specialization</dt><dd>{{ doc.specialization or '—' }}</dd></div><div><dt>Hospital</dt><dd>{{ doc.hospital or '—' }}</dd></div>{% endif %}
+        <div><dt>Member since</dt><dd>{{ current_user.created_at|fmt_date }}</dd></div>
+      </dl>
+    {% else %}
+      <div class="card-header"><h3 class="card-title">Edit personal information</h3></div>
+      <form method="post" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="form-grid">
+          <div class="form-group {{ 'has-error' if errors.get('name') }}"><label class="form-label" for="name">Full name</label>
+            <input class="form-control" id="name" name="name" required value="{{ current_user.name }}">{{ field_error(errors,'name') }}</div>
+          <div class="form-group {{ 'has-error' if errors.get('phone') }}"><label class="form-label" for="phone">Phone</label>
+            <input class="form-control" id="phone" name="phone" required value="{{ current_user.phone or '' }}">{{ field_error(errors,'phone') }}</div>
+          <div class="form-group"><label class="form-label">Email (login ID)</label><input class="form-control" value="{{ current_user.email }}" disabled></div>
+          {% if pat %}
+          <div class="form-group"><label class="form-label">Patient ID</label><input class="form-control" value="{{ pat.patient_code }}" disabled></div>
+          <div class="form-group {{ 'has-error' if errors.get('age') }}"><label class="form-label" for="age">Age</label>
+            <input class="form-control" type="number" min="0" max="130" id="age" name="age" value="{{ pat.age if pat.age is not none else '' }}">{{ field_error(errors,'age') }}</div>
+          <div class="form-group"><label class="form-label" for="gender">Gender</label>
+            <select class="form-control" id="gender" name="gender">
+              {% for opt in ['', 'Male', 'Female', 'Other'] %}<option value="{{ opt }}" {{ 'selected' if pat.gender == opt }}>{{ opt or 'Select' }}</option>{% endfor %}
+            </select></div>
+          <div class="form-group span-2"><label class="form-label" for="address">Address</label><textarea class="form-control" id="address" name="address" rows="2">{{ pat.address or '' }}</textarea></div>
+          <div class="form-group span-2"><label class="form-label" for="emergency_contact">Emergency contact</label>
+            <input class="form-control" id="emergency_contact" name="emergency_contact" value="{{ pat.emergency_contact or '' }}" placeholder="Name and phone number"></div>
+          <div class="form-group span-2"><label class="form-label" for="medical_info">Basic medical information</label>
+            <textarea class="form-control" id="medical_info" name="medical_info" rows="3" placeholder="Blood group, allergies, long-term conditions…">{{ pat.medical_info or '' }}</textarea></div>
+          {% endif %}
+          {% if doc %}
+          <div class="form-group"><label class="form-label" for="specialization">Specialization</label><input class="form-control" id="specialization" name="specialization" value="{{ doc.specialization or '' }}"></div>
+          <div class="form-group"><label class="form-label" for="hospital">Hospital</label><input class="form-control" id="hospital" name="hospital" value="{{ doc.hospital or '' }}"></div>
+          {% endif %}
+        </div>
+        <div class="btn-row"><button class="btn btn-primary" type="submit">Save changes</button><a class="btn btn-outline" href="{{ url_for('patient.profile') }}">Cancel</a></div>
+      </form>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

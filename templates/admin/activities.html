@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import icon, empty_state, action_icon, action_tone %}
+{% block title %}Activity Logs{% endblock %}
+{% block page_title %}System Activity Logs{% endblock %}
+{% block content %}
+<form class="filter-bar card inline-filters" method="get">
+  <div class="search-field">{{ icon('search') }}<input type="search" name="q" value="{{ q }}" placeholder="Search by user or details"></div>
+  <select class="form-control" name="action" onchange="this.form.submit()"><option value="">All actions</option>
+    {% for a in actions %}<option value="{{ a }}" {{ 'selected' if action == a }}>{{ a }}</option>{% endfor %}</select>
+  <button class="btn btn-primary" type="submit">Filter</button>
+  {% if q or action %}<a class="btn btn-outline" href="{{ url_for('admin.activity') }}">Clear</a>{% endif %}
+</form>
+<div class="card">
+  {% if logs %}
+  <div class="table-wrap"><table class="table responsive"><thead><tr><th>Time</th><th>User</th><th>Action</th><th>Details</th><th>IP</th></tr></thead><tbody>
+    {% for a in logs %}<tr><td data-label="Time">{{ a.created_at|fmt_datetime }}</td>
+      <td data-label="User">{{ a.actor_name or 'System' }}{% if a.actor_role %}<div class="row-meta">{{ a.actor_role|capitalize }}</div>{% endif %}</td>
+      <td data-label="Action"><span class="act-pill tone-{{ action_tone(a.action) }}">{{ action_icon(a.action) }} {{ a.action }}</span></td>
+      <td data-label="Details">{{ a.details or '—' }}</td><td data-label="IP">{{ a.ip_address or '—' }}</td></tr>{% endfor %}
+  </tbody></table></div>
+  <p class="muted small pad">Showing the latest {{ logs|length }} entries.</p>
+  {% else %}{{ empty_state('activity', 'No activity found', 'No log entries match your filters.') }}{% endif %}
+</div>
+{% endblock %}

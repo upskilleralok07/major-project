@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import icon, field_error %}
+{% block title %}Profile{% endblock %}
+{% block page_title %}{{ 'Edit profile' if editing else 'My profile' }}{% endblock %}
+{% block content %}
+<div class="profile-layout">
+  <div class="card profile-side">
+    <div class="avatar xl">{{ current_user.name|initials }}</div>
+    <h2>{{ current_user.name }}</h2>
+    <span class="badge badge-info">{{ current_user.role|capitalize }}</span>
+    {% if pat %}
+      <p class="muted">Patient ID: <strong>{{ pat.patient_code }}</strong></p>
+      <p class="muted">{{ current_user.email }}</p>
+      
+      <div class="qr-profile-card text-center" style="margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid var(--border-color, #e2e8f0);">
+        <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 0.25rem;">Digital Health Pass</h3>
+        <p class="muted" style="font-size: 0.8rem; margin-bottom: 0.75rem;">Show or share this QR code with doctors to give instant access to all your medical reports.</p>
+        
+        <div style="background: white; padding: 10px; border-radius: 12px; display: inline-block; border: 1px solid #cbd5e1; box-shadow: 0 2px 4px rgba(0,0,0,0.05); cursor: pointer;" onclick="openQrModal()">
+          <img src="{{ url_for('patient.profile_qr_svg') }}" alt="Medical QR Code" style="width: 140px; height: 140px; display: block;">
+        </div>
+
+        <div style="margin-top: 0.75rem; display: flex; flex-direction: column; gap: 0.4rem; align-items: center;">
+          <button class="btn btn-outline btn-sm" onclick="openQrModal()" type="button" style="width: 100%;">
+            Expand QR Code
+          </button>
+          <button class="btn btn-outline btn-sm" onclick="copyQrLink()" type="button" style="width: 100%;">
+            Copy Access Link
+          </button>
+          <a class="btn btn-outline btn-sm" href="{{ url_for('patient.profile_qr_svg') }}" download="Medical_QR_{{ pat.patient_code }}.svg" style="width: 100%;">
+            Download QR Image
+          </a>
+          
+          <form method="post" action="{{ url_for('patient.reset_qr_token') }}" style="width: 100%;" onsubmit="return confirm('Regenerating your QR Code will revoke access for any doctor currently using your old QR code. Continue?');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-outline btn-sm" type="submit" style="width: 100%; border-color: #fca5a5; color: #dc2626;">
+              Regenerate QR Code
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- QR Modal -->
+      <div id="qrModal" class="modal-backdrop" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:9999; justify-content:center; align-items:center;">
+        <div class="card" style="max-width: 380px; width: 90%; text-align: center; position: relative; padding: 1.5rem;">
+          <button onclick="closeQrModal()" style="position:absolute; top:10px; right:14px; background:none; border:none; font-size:1.5rem; cursor:pointer; color: #64748b;">&times;</button>
+          <h3 style="margin-bottom:0.25rem;">Medical Health Pass</h3>
+          <p class="muted" style="margin-bottom:1rem; font-size: 0.85rem;">Scan with doctor device camera</p>
+          <div style="background:white; padding:12px; border-radius:12px; display:inline-block; border:2px solid #e2e8f0; margin-bottom:1rem;">
+            <img src="{{ url_for('patient.profile_qr_svg') }}" alt="Medical QR Code" style="width: 220px; height: 220px;">
+          </div>
+          <p style="font-weight:600; margin-bottom:0.25rem;">{{ current_user.name }}</p>
+          <p class="muted" style="font-size:0.85rem;">Patient ID: {{ pat.patient_code }}</p>
+        </div>
+      </div>
+
+      <script>
+        function openQrModal() {
+          document.getElementById('qrModal').style.display = 'flex';
+        }
+        function closeQrModal() {
+          document.getElementById('qrModal').style.display = 'none';
+        }
+        function copyQrLink() {
+          const qrUrl = "{{ url_for('doctor.qr_access', qr_token=pat.qr_token, _external=True) }}";
+          if (navigator.clipboard) {
+            navigator.clipboard.writeText(qrUrl).then(() => {
+              alert("Access link copied to clipboard!");
+            }).catch(() => {
+              prompt("Copy access link:", qrUrl);
+            });
+          } else {
+            prompt("Copy access link:", qrUrl);
+          }
+        }
+      </script>
+    {% else %}
+      <p class="muted">{{ current_user.email }}</p>
+    {% endif %}
+  </div>
+  <div class="card">
+    {% if not editing %}
+      <div class="card-header"><h3 class="card-title">Personal information</h3><a class="btn btn-outline btn-sm" href="{{ url_for('patient.edit_profile') }}">{{ icon('edit') }} Edit profile</a></div>
+      <dl class="detail-list">
+        {% if pat %}<div><dt>Patient ID</dt><dd>{{ pat.patient_code }}</dd></div>{% endif %}
+        <div><dt>Full name</dt><dd>{{ current_user.name }}</dd></div>
+        {% if pat %}<div><dt>Age</dt><dd>{{ pat.age if pat.age is not none else '—' }}</dd></div>
+        <div><dt>Gender</dt><dd>{{ pat.gender or '—' }}</dd></div>{% endif %}
+        <div><dt>Phone</dt><dd>{{ current_user.phone or '—' }}</dd></div>
+        <div><dt>Email</dt><dd>{{ current_user.email }}</dd></div>
+        {% if pat %}<div><dt>Address</dt><dd>{{ pat.address or '—' }}</dd></div>
+        <div><dt>Emergency contact</dt><dd>{{ pat.emergency_contact or '—' }}</dd></div>
+        <div class="full"><dt>Basic medical information</dt><dd class="pre">{{ pat.medical_info or '—' }}</dd></div>{% endif %}
+        {% if doc %}<div><dt>Specialization</dt><dd>{{ doc.specialization or '—' }}</dd></div><div><dt>Hospital</dt><dd>{{ doc.hospital or '—' }}</dd></div>{% endif %}
+        <div><dt>Member since</dt><dd>{{ current_user.created_at|fmt_date }}</dd></div>
+      </dl>
+    {% else %}
+      <div class="card-header"><h3 class="card-title">Edit personal information</h3></div>
+      <form method="post" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="form-grid">
+          <div class="form-group {{ 'has-error' if errors.get('name') }}"><label class="form-label" for="name">Full name</label>
+            <input class="form-control" id="name" name="name" required value="{{ current_user.name }}">{{ field_error(errors,'name') }}</div>
+          <div class="form-group {{ 'has-error' if errors.get('phone') }}"><label class="form-label" for="phone">Phone</label>
+            <input class="form-control" id="phone" name="phone" required value="{{ current_user.phone or '' }}">{{ field_error(errors,'phone') }}</div>
+          <div class="form-group"><label class="form-label">Email (login ID)</label><input class="form-control" value="{{ current_user.email }}" disabled></div>
+          {% if pat %}
+          <div class="form-group"><label class="form-label">Patient ID</label><input class="form-control" value="{{ pat.patient_code }}" disabled></div>
+          <div class="form-group {{ 'has-error' if errors.get('age') }}"><label class="form-label" for="age">Age</label>
+            <input class="form-control" type="number" min="0" max="130" id="age" name="age" value="{{ pat.age if pat.age is not none else '' }}">{{ field_error(errors,'age') }}</div>
+          <div class="form-group"><label class="form-label" for="gender">Gender</label>
+            <select class="form-control" id="gender" name="gender">
+              {% for opt in ['', 'Male', 'Female', 'Other'] %}<option value="{{ opt }}" {{ 'selected' if pat.gender == opt }}>{{ opt or 'Select' }}</option>{% endfor %}
+            </select></div>
+          <div class="form-group span-2"><label class="form-label" for="address">Address</label><textarea class="form-control" id="address" name="address" rows="2">{{ pat.address or '' }}</textarea></div>
+          <div class="form-group span-2"><label class="form-label" for="emergency_contact">Emergency contact</label>
+            <input class="form-control" id="emergency_contact" name="emergency_contact" value="{{ pat.emergency_contact or '' }}" placeholder="Name and phone number"></div>
+          <div class="form-group span-2"><label class="form-label" for="medical_info">Basic medical information</label>
+            <textarea class="form-control" id="medical_info" name="medical_info" rows="3" placeholder="Blood group, allergies, long-term conditions…">{{ pat.medical_info or '' }}</textarea></div>
+          {% endif %}
+          {% if doc %}
+          <div class="form-group"><label class="form-label" for="specialization">Specialization</label><input class="form-control" id="specialization" name="specialization" value="{{ doc.specialization or '' }}"></div>
+          <div class="form-group"><label class="form-label" for="hospital">Hospital</label><input class="form-control" id="hospital" name="hospital" value="{{ doc.hospital or '' }}"></div>
+          {% endif %}
+        </div>
+        <div class="btn-row"><button class="btn btn-primary" type="submit">Save changes</button><a class="btn btn-outline" href="{{ url_for('patient.profile') }}">Cancel</a></div>
+      </form>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
