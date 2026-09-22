@@ -151,12 +151,13 @@ def init_database(app, reset=False):
     print("Database ready:", app.config["DATABASE"])
 
 
+app = create_app()
+
 if __name__ == "__main__":
-    application = create_app()
     if "--reset-db" in sys.argv:
-        init_database(application, reset=True)
+        init_database(app, reset=True)
         sys.exit(0)
     if "--init-db" in sys.argv:
-        init_database(application)
+        init_database(app)
         sys.exit(0)
-    application.run(debug=os.environ.get("FLASK_DEBUG", "1") == "1", host="127.0.0.1", port=5000)
+    app.run(debug=os.environ.get("FLASK_DEBUG", "1") == "1", host="127.0.0.1", port=5000)
