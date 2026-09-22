@@ -3,11 +3,26 @@
 Everything that a student may want to change lives here.
 """
 import os
+import shutil
 import secrets
 from datetime import timedelta
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 IS_VERCEL = bool(os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"))
+
+
+def get_database_path():
+    """On Vercel, copy database to /tmp so SQLite can perform INSERT/UPDATE queries on a writable filesystem."""
+    base_db = os.path.join(BASE_DIR, "medical_reports.db")
+    if IS_VERCEL:
+        tmp_db = "/tmp/medical_reports.db"
+        if not os.path.exists(tmp_db) and os.path.exists(base_db):
+            try:
+                shutil.copyfile(base_db, tmp_db)
+            except Exception:
+                pass
+        return tmp_db
+    return base_db
 
 
 def _load_secret_key():
@@ -35,7 +50,7 @@ def _load_secret_key():
 
 class Config:
     SECRET_KEY = _load_secret_key()
-    DATABASE = os.path.join(BASE_DIR, "medical_reports.db")
+    DATABASE = get_database_path()
     UPLOAD_FOLDER = "/tmp/uploads" if IS_VERCEL else os.path.join(BASE_DIR, "uploads")
 
     # Maximum size of one uploaded report (in MB). Change it here or with
