@@ -7,28 +7,36 @@ import secrets
 from datetime import timedelta
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+IS_VERCEL = bool(os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"))
 
 
 def _load_secret_key():
-    """Use SECRET_KEY from the environment; otherwise create one once and
-    keep it in a local file so sessions survive restarts."""
+    """Use SECRET_KEY from environment or local fallback without crashing on read-only file systems."""
     env_key = os.environ.get("SECRET_KEY")
     if env_key:
         return env_key
+    if IS_VERCEL:
+        return "medivault-secret-key-vercel-production-2026"
     key_file = os.path.join(BASE_DIR, ".secret_key")
     if os.path.exists(key_file):
-        with open(key_file) as fh:
-            return fh.read().strip()
+        try:
+            with open(key_file) as fh:
+                return fh.read().strip()
+        except Exception:
+            pass
     key = secrets.token_hex(32)
-    with open(key_file, "w") as fh:
-        fh.write(key)
+    try:
+        with open(key_file, "w") as fh:
+            fh.write(key)
+    except Exception:
+        pass
     return key
 
 
 class Config:
     SECRET_KEY = _load_secret_key()
     DATABASE = os.path.join(BASE_DIR, "medical_reports.db")
-    UPLOAD_FOLDER = os.path.join(BASE_DIR, "uploads")
+    UPLOAD_FOLDER = "/tmp/uploads" if IS_VERCEL else os.path.join(BASE_DIR, "uploads")
 
     # Maximum size of one uploaded report (in MB). Change it here or with
     # the MAX_FILE_MB environment variable.

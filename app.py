@@ -21,7 +21,10 @@ from utils.auth import AppError, wants_json
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
-    os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+    try:
+        os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+    except OSError:
+        pass
     app.teardown_appcontext(close_db)
 
     from routes.auth import bp as auth_bp
@@ -132,8 +135,11 @@ def create_app():
         return show_error(500, "Something went wrong", "Unexpected server error. Please try again.")
 
     # ------------------------------------------------- first-run database
-    if not os.path.exists(app.config["DATABASE"]):
-        init_database(app)
+    with app.app_context():
+        try:
+            init_schema()
+        except Exception as e:
+            app.logger.exception(e)
     return app
 
 
